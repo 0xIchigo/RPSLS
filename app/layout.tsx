@@ -1,8 +1,5 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import dynamic from "next/dynamic";
-
-const NavBar = dynamic(() => import("./components/NavBar"), { ssr: false });
 
 export const metadata: Metadata = {
   title: 'RPSLS',
@@ -17,7 +14,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="h-full w-full bg-black text-white">
-        <NavBar />
         {children}
       </body>
     </html>
