@@ -75,7 +75,7 @@ export default function HomePage() {
         </div>
         {(currentAccount == "") && (
             <div className="mt-4">
-                Please connect your wallet to play
+                Please connect your wallet to play!
             </div>
         )}
         {currentAccount && !onRightChain && (

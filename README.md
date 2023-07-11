@@ -9,6 +9,7 @@ In the following paragraphs, I outline how to play the game, the Mixed Strategy 
 ## How to Play
 
 To play RPSLS each player must pick either Rock, Paper, Scissors, Lizard, or Spock and reveal it at the same time as the other player. A winning hand is determined as follows:
+
 - Scissors cuts Paper
 - Paper covers Rock
 - Rock crushes Lizard
@@ -43,4 +44,9 @@ The Nash Equilibrium for RPSLS is a mixed strategy for each player where each ac
 ## Design Considerations
 
 ### Commitment Scheme and Privacy
+
 The main consideration for this app is how can the code be structured such that the second player is unable to determine what action the first player has already made. When the first player commits their move, a salt is added to the hash to guarantee the creation of a unique commitment hash. A salt is random data that is used as additional input to ensure that even when the inputs are the same (for example, the player chooses lizard over multiple games) a unique output is generated.
+
+# Acknowledgements
+
+The smart contract used for this project was created by [Clément Lesaege](https://twitter.com/clesaege?s=20), CTO of [Kleros](https://kleros.io/). I do not take any credit for the creation of this smart contract and am merely deploying and interacting with it. I urge you to checkout both Clément's work and the work being done at Kleros!
