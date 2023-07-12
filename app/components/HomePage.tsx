@@ -63,21 +63,38 @@ export default function HomePage() {
         return value;
     }
 
-    const deployRPSContract = async () => {
+    const deployRPSContract = async (
+        choice: number,
+        p2Address: string,
+        stake: string,
+    ) => {
         if (!currentAccount) return;
         
         const account = currentAccount as Address;
         const salt = getRandomVal();
-        const playerOneTestHash = keccak256(encodePacked(["uint8", "uint256"], [1, salt]))
+        const p1Hash = keccak256(encodePacked(["uint8", "uint256"], [choice, salt]))
 
-        // @ts-ignore
-        const hash = await walletClient.deployContract({
-            ...rpsContract,
-            account,
-            args: [playerOneTestHash, "0x" /* Pass in contract address */],
-        });
-        setHash(hash);
-        console.log(hash);
+        try {
+            // @ts-ignore
+            const hash = await walletClient.deployContract({
+                ...rpsContract,
+                account,
+                /*
+                    The user is passing in the address with the 0x hex prefix but TS doesn't like us putting in
+                    just the string value as it expects type `0x${string}`
+                    When you copy an address from MM it includes the prefix so it is reasonable to assume the
+                    user will also include it here
+                */
+                // @ts-ignore
+                args: [p1Hash, p2Address],
+                value: BigInt(stake),
+            });
+            setHash(hash);
+            console.log(hash);
+        } catch {
+            console.log("Failed to deploy contract - invalid data provided!");
+            console.log("Please ensure to pass the correct Player 2 address (with the leading 0x prefix), and the numeric value of Ether you wish to stake");
+        }
     }
 
     const checkWalletConnected = async () => {
