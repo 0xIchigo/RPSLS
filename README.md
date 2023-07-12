@@ -35,7 +35,7 @@ The following table outlines the game theory behind RPSLS:
 | Lizard   | (-1, 1) | (1, -1) | (-1, 1)  | (0, 0)  | (1, -1) |
 | Spock    | (1, -1) | (-1, 1) | (1, -1)  | (-1, 1) | (0, 0)  |
 
-The payoff matrix for RPSLS is a 5x5 matrix with the rows and columns represeting the five possible actions of each player (Rock, Paper, Scissors, Lizard, Spock). The diagonal of the matrix is 0, representing the case where both players pick the same action thereby tying the game. For every other cell, a 1 represents a winning move and a -1 represents a losing move.
+The payoff matrix for RPSLS is a 5x5 matrix with the rows and columns representing the five possible actions of each player (Rock, Paper, Scissors, Lizard, Spock). The diagonal of the matrix is 0, representing the case where both players pick the same action thereby tying the game. For every other cell, a 1 represents a winning move and a -1 represents a losing move.
 
 It is important to note that, like the original game Rock, Paper, Scissors, no player can unilateraly change their strategy in the long run to improve their condition - there is no pure strategy Nash equilibria for this game.
 
@@ -45,7 +45,9 @@ The Nash Equilibrium for RPSLS is a mixed strategy for each player where each ac
 
 ### Commitment Scheme and Privacy
 
-The main consideration for this app is how can the code be structured such that the second player is unable to determine what action the first player has already made. When the first player commits their move, a salt is added to the hash to guarantee the creation of a unique commitment hash. A salt is random data that is used as additional input to ensure that even when the inputs are the same (for example, the player chooses lizard over multiple games) a unique output is generated.
+The main consideration for this app is how can the code be structured such that the second player is unable to determine what action the first player has already made. When the first player commits their move, a salt is added to the Keccak256 hash to guarantee the creation of a unique commitment hash. A salt is random data that is used as additional input to ensure that even when the inputs are the same (for example, the player chooses lizard over multiple games) a unique output is always generated. The typical recommendation for bit security is at least 180 bit security, however, there is [consensus among security researchers that](https://xtendo.org/bit_security_level) 128 bits of security is sufficient until the next revolutionary breakthrough in either mathematics or technology, and that 112 bits of security is sufficient until 2030.
+
+Given general consensus that Keccak256 is stronger than SHA256, providing the Keccak256 hash with a salt of 256 bits that consists of cryptographically strong, random values that are uniquely generated every game, in tandem with a 5 minute timer, is more than secure. The important thing here is that the salt is uniquely generated each game with cryptographically strong, random numbers. This prevents any sort of pass the hash (PtH) as an attacker who figures out the salt for game 1, for example, has no insight into the salt for game 2, since the salt is dynamic. Moreover, the 5 minute timers places stringent time constraints on any attack vector an attacker could pursue quickly. Regardless, we are using a 256-bit salt populated with cryptographically strong, random values; [256-bit security is more than secure](https://youtu.be/S9JGmA5_unY) for our purposes. I did contemplate moving the salt calculation into a permissioned database, however that seems overkill for the purpose and scope of this app and it opens up a number of new potential attack vectors that I'd have to account for.
 
 # Acknowledgements
 
