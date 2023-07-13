@@ -37,6 +37,11 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
     const [hash, setHash] = useState<Hash>();
     const [contractAddress, setContractAddress] = useState<Hash>();
     const [generateNewSalt, setGenerateNewSalt] = useState<Boolean>(false);
+    const [moveInfo, setMoveInfo] = useState<MoveInfo>({
+        p1Moved: false,
+        p2Moved: false,
+        p2Choice: 0, // Defaults to Null
+    });
 
     /*
         The value stored in a useRef() hook is not part of the component's state and is not directly
@@ -67,7 +72,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
     ) => {
         if (!props.playerAddress) return;
         moveRef.current = choice;
-        
+
         const account = props.playerAddress as Address;
         setGenerateNewSalt(true);
         const p1Hash: Hex = keccak256(encodePacked(["uint8", "uint256"], [choice, saltRef.current as bigint])) as Hex;
@@ -82,6 +87,13 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
 
             setHash(hash);
 
+            // Resetting moveInfo for the new game after Player One moves
+            setMoveInfo({
+                p1Moved: true,
+                p2Moved: false,
+                p2Choice: 0,
+            });
+
             const receipt = await props.publicClient.waitForTransactionReceipt({ hash });
             setContractAddress(receipt.contractAddress);
             console.log(`Game Address: ${contractAddress}`);
@@ -92,7 +104,6 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
             };
 
             connected?.send(peerMessage);
-
 
 
         } catch {
@@ -146,7 +157,34 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
         };
 
         createPeer();
-    }, [])
+    }, []);
+
+    const getBlockchainInfo = async () => {
+        if (contractAddress) {
+
+            try {
+                // We set the p1Moved to true in the createRPSLSGame function and therefore do not have to check again -
+                // the contract will not deploy without the hash
+                const [p2Move] = await Promise.all([
+                    props.publicClient.readContract({
+                        ...rpsContract,
+                        address: contractAddress,
+                        functionName: "c2"
+                    })
+                ]);
+    
+                if (p2Move !== 0) {
+                    setMoveInfo({
+                        ...moveInfo,
+                        p2Moved: true,
+                        p2Choice: p2Move,
+                    });
+                }
+            } catch (err) {
+                console.log(`Error getting game info from Sepolia: ${err}`);
+            }
+        }
+    }
 
     return (
         <div>Hello!</div>
