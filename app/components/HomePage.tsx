@@ -1,8 +1,7 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/dist/client/router";
 import { 
     createPublicClient,
     createWalletClient, 
@@ -14,11 +13,14 @@ import {
     stringify,
     encodePacked,
     keccak256, 
-    toBytes,
 } from "viem";
 import { sepolia } from "viem/chains";
 import "viem/window";
 import { rpsContract } from "../contracts/rpsContract";
+import getRandomVal from "../../public/utils/getRandomVal";
+
+import  P1UI  from "./P1UI";
+import  P2UI from "./P2UI"
 
 const SEPOLIA_ID = "0xaa36a7";
 
@@ -27,6 +29,8 @@ export default function HomePage() {
     const [hash, setHash] = useState<Hash>();
     const [receipt, setReceipt] = useState<TransactionReceipt>();
     const [onRightChain, setOnRightChain] = useState<Boolean>(false);
+
+    const router = useRouter();
 
     const publicClient = createPublicClient({
         chain: sepolia,
@@ -43,27 +47,7 @@ export default function HomePage() {
         setCurrentAccount(address);
     }
 
-    const getRandomVal = () => {
-        const newArray = new Uint8Array(32);
-        crypto.getRandomValues(newArray);
-
-        /*
-            Kind of annoying but viem doesn't have a built-in function for converting to a BigInt
-            Here we are using bitwise operations to construct a 'BigInt' (as the salt needs to be of type BigInt) from
-            the raw binary data. First we shift the value left by 8 bits then we OR the current byte value
-        */
-
-        let value = BigInt(0);
-
-        for (let i = 0; i < newArray.length; i++) {
-            value <<= BigInt(8);
-            value |= BigInt(newArray[i]);
-        }
-
-        return value;
-    }
-
-    const deployRPSContract = async (
+    const createRPSLSGame = async (
         choice: number,
         p2Address: string,
         stake: string,
@@ -166,7 +150,7 @@ export default function HomePage() {
                 </div>
             )}
             {currentAccount && onRightChain && !receipt && (
-                <button onClick={deployRPSContract}>
+                <button onClick={() => createRPSLSGame(1, "", "")}>
                     Deploy Contract
                 </button>
             )}
@@ -182,6 +166,13 @@ export default function HomePage() {
                         </pre>
                     </div>
                 </>
+            )}
+
+
+            {router.query.peerId === undefined ? (
+                { /* Display Player1 UI and pass in current account */ }
+            ) : (
+                { /* Display Player2 UI and pass in peerID and current account*/ }
             )}
         </main>
     )
