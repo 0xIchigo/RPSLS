@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/dist/client/router";
 import { 
     createPublicClient,
@@ -9,10 +9,12 @@ import {
     http,
     Hash,
     Address,
+    Hex,
     TransactionReceipt,
     stringify,
     encodePacked,
     keccak256, 
+    parseEther
 } from "viem";
 import { sepolia } from "viem/chains";
 import "viem/window";
@@ -30,7 +32,9 @@ export default function HomePage() {
     const [receipt, setReceipt] = useState<TransactionReceipt>();
     const [onRightChain, setOnRightChain] = useState<Boolean>(false);
 
-    const router = useRouter();
+    let saltRef = useRef<String | undefined>();
+
+    // const router = useRouter();
 
     const publicClient = createPublicClient({
         chain: sepolia,
@@ -47,6 +51,8 @@ export default function HomePage() {
         setCurrentAccount(address);
     }
 
+    saltRef.current = "testing";
+
     const createRPSLSGame = async (
         choice: number,
         p2Address: string,
@@ -54,9 +60,9 @@ export default function HomePage() {
     ) => {
         if (!currentAccount) return;
         
-        const account = currentAccount as Address;
+        const account: Address = currentAccount as Address;
         const salt = getRandomVal();
-        const p1Hash = keccak256(encodePacked(["uint8", "uint256"], [choice, salt]))
+        const p1Hash: Hex = keccak256(encodePacked(["uint8", "uint256"], [choice, salt])) as Hex;
 
         try {
             // @ts-ignore
@@ -69,12 +75,11 @@ export default function HomePage() {
                     When you copy an address from MM it includes the prefix so it is reasonable to assume the
                     user will also include it here
                 */
-                // @ts-ignore
-                args: [p1Hash, p2Address],
-                value: BigInt(stake),
+                
+                args: [p1Hash, p2Address as Address],
+                value: parseEther(stake),
             });
             setHash(hash);
-            console.log(hash);
         } catch {
             console.log("Failed to deploy contract - invalid data provided!");
             console.log("Please ensure to pass the correct Player 2 address (with the leading 0x prefix), and the numeric value of Ether you wish to stake");
@@ -150,7 +155,7 @@ export default function HomePage() {
                 </div>
             )}
             {currentAccount && onRightChain && !receipt && (
-                <button onClick={() => createRPSLSGame(1, "", "")}>
+                <button onClick={() => createRPSLSGame(1, "0xA26644Bf5797F70243C00a8f713c7979a7295BF2", "0.001")}>
                     Deploy Contract
                 </button>
             )}
@@ -158,6 +163,7 @@ export default function HomePage() {
                 <>
                     <div>
                         Contract address: {receipt.contractAddress}
+                        {typeof(receipt.contractAddress)}
                     </div>
                     <div>
                         Receipt:{' '}
@@ -168,12 +174,14 @@ export default function HomePage() {
                 </>
             )}
 
+            <P1UI playerAddress={currentAccount} publicClient={publicClient} walletClient={walletClient} />
 
-            {router.query.peerId === undefined ? (
-                { /* Display Player1 UI and pass in current account */ }
+
+            { /*router.query.peerId === undefined ? (
+                <P1UI playerAddress={currentAccount} />
             ) : (
-                { /* Display Player2 UI and pass in peerID and current account*/ }
-            )}
+                <P2UI playerAddress={currentAccount} />
+            )*/}
         </main>
     )
 }
