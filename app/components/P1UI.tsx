@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Peer, DataConnection } from "peerjs";
+import { useInterval } from "usehooks-ts";
+import { DataConnection } from "peerjs";
 import { nanoid } from "nanoid";
 import {
     keccak256,
@@ -72,6 +73,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
     ) => {
         if (!props.playerAddress) return;
         moveRef.current = choice;
+        setStake(stake);
 
         const account = props.playerAddress as Address;
         setGenerateNewSalt(true);
@@ -185,6 +187,11 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
             }
         }
     }
+
+    // Every 30 seconds we check the chain to see if P2 moved
+    useInterval(async () => {
+        if (contractAddress) getBlockchainInfo(); 
+    }, 30000);
 
     return (
         <div>Hello!</div>

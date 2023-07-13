@@ -13,3 +13,10 @@ export type MoveInfo = {
     p2Moved: Boolean,
     p2Choice: Number
 };
+
+export type TimerSettings = {
+    status: "Null" | "Running" | "Finished",
+    time: Date,
+    reset: Boolean,
+    expired: Boolean,
+}
