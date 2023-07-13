@@ -10,7 +10,8 @@ import {
     Hex
 } from "viem";
 import { rpsContract } from "../contracts/rpsContract";
-import getRandomVal from "@/public/utils/getRandomVal";
+import getRandomVal from "../../public/utils/getRandomVal";
+import initializePeer from "../../public/utils/initializePeer";
 import { Winner, PeerMessage, MoveInfo } from "../@types/types";
 
 enum Weapon {
@@ -53,12 +54,19 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
         if (generateNewSalt) saltRef.current = getRandomVal();
     }, [generateNewSalt])
 
+    /*
+        Using the logic above, we can also use a useRef() hook to keep track of Player 1's move so we can 
+        pass it in later to determine a winner via the solve() function in rps.sol
+    */
+   let moveRef = useRef<Weapon | undefined>();
+
     const createRPSLSGame = async (
         choice: number,
         p2Address: string,
         stake: string,
     ) => {
         if (!props.playerAddress) return;
+        moveRef.current = choice;
         
         const account = props.playerAddress as Address;
         setGenerateNewSalt(true);
@@ -99,7 +107,45 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
 
         const createPeer = async () => {
             const id = `RPSLS-${nanoid()}`;
-        }
+            const peer = await initializePeer(id);
+            setPeerId(peer.id);
+
+            peer.on("error", (e) => console.log(`Error: ${e}`));
+            peer.on("open", () => {});
+
+            peer.on("connection", (connection) => {
+                connection.on("error", (e) => console.log(`Connection Error: ${e}`));
+
+                connection.on("open", () => {
+                    connection.send("Connection established with Player 1");
+                    const peerMessage: PeerMessage = {
+                        _type: "Player1Address",
+                        address: props.playerAddress,
+                    }
+                    connection.send(peerMessage);
+                });
+
+                setConnected(connection);
+
+                /*
+                    We can ignore TypeScript's concerns of data being type unknown as the only 
+                    data we will be passing P2P will be of type PeerMessage
+                */
+                //@ts-ignore
+                connection.on("data", (data: PeerMessage) => {
+                    if (data._type === "Connected") {
+                        return console.log("Player 2 has connected");
+                    } else if (data._type === "Player2Address") {
+                        // SET TIMER
+                        return setP2Address(data.address)
+                    } else {
+                        return console.log("");
+                    }
+                })
+            });
+        };
+
+        createPeer();
     }, [])
 
     return (
