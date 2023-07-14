@@ -303,6 +303,57 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
         )
     };
 
+    const win = (_c1: Weapon, _c2: Weapon) => {
+        if (_c1 === _c2) {
+            return "Draw";
+        } else if (_c1 % 2 == _c2 % 2) {
+            return _c1 < _c2;
+        } else {
+            return _c1 > _c2;
+        }
+    }
+
+    const decideWinner = (): Winner => {
+        if (!moveRef.current || p2Response) return "Null";
+
+        if (win(moveRef.current, p2Response as Weapon) === "Draw") {
+            return "Draw";
+        } else if (win(moveRef.current, p2Response as Weapon)) {
+            return "Player1";
+        } else {
+            return "Player2";
+        }
+    }
+
+    const checkWinner = async () => {
+        console.log("Checking winner...");
+
+        try {
+            const { request } = await props.publicClient.simulateContract({
+                ...rpsContract,
+                account: props.playerAddress as Address,
+                address: contractAddress,
+                functionName: "solve",
+                args: [moveRef.current, saltRef.current]
+            });
+
+            await props.walletClient.writeContract(request);
+
+            const winningPlayer = decideWinner();
+            setWinner(winningPlayer);
+
+            if (winningPlayer !== "Null") {
+                let peerMessage: PeerMessage = { _type: "Winner", player: winningPlayer };
+                connected?.send(peerMessage);
+
+                peerMessage = { _type: "Player1Choice", choice: moveRef.current as Weapon };
+                connected?.send(peerMessage);
+            }
+        } catch (err) {
+            console.log(`Error checking the winner: ${err}`);
+        }
+    }
+
     return (
         <div>Hello!</div>
     )
