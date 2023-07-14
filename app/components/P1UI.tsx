@@ -13,6 +13,7 @@ import {
 import { rpsContract } from "../contracts/rpsContract";
 import getRandomVal from "../../public/utils/getRandomVal";
 import initializePeer from "../../public/utils/initializePeer";
+import Timer from "../../public/utils/Timer";
 import { Winner, PeerMessage, MoveInfo, TimerSettings } from "../@types/types";
 
 enum Weapon {
@@ -256,6 +257,51 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
             console.log(`Error checking if Player 2 timed out: ${err}`);
         }
     }
+
+    const timerComponent = (
+        timer: TimerSettings,
+        setTimer: React.Dispatch<React.SetStateAction<TimerSettings>>
+    ) => {
+        if (timer.status = "Running") {
+            return (
+                <Timer 
+                    expiryTimestamp={timer.time}
+                    timerState={{ timer, setTimer }}
+                />
+            )
+        }
+
+        return (
+            <span></span>
+        )
+    }
+
+    const timerExpired = (
+        winner: Winner,
+        timer: TimerSettings,
+        p2Timeout: () => void,
+    ) => {
+        if (!timer.expired) {
+            return <span></span>
+        }
+
+        if (timer.expired && winner === "Null") {
+            return (
+                <div>
+                    <div>
+                        Player 2 has timed out!
+                    </div>
+                    <button onClick={async () => p2Timeout()}>
+                        Click here to get both stakes
+                    </button>
+                </div>
+            )
+        }
+
+        return (
+            <span></span>
+        )
+    };
 
     return (
         <div>Hello!</div>
