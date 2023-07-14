@@ -13,7 +13,7 @@ import {
 import { rpsContract } from "../contracts/rpsContract";
 import getRandomVal from "../../public/utils/getRandomVal";
 import initializePeer from "../../public/utils/initializePeer";
-import { Winner, PeerMessage, MoveInfo } from "../@types/types";
+import { Winner, PeerMessage, MoveInfo, TimerSettings } from "../@types/types";
 
 enum Weapon {
     "Null",
@@ -23,7 +23,6 @@ enum Weapon {
     "Spock",
     "Lizard",
 }
-
 
 
 const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: any }) => {
@@ -42,6 +41,12 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
         p1Moved: false,
         p2Moved: false,
         p2Choice: 0, // Defaults to Null
+    });
+    const [timer, setTimer] = useState<TimerSettings>({
+        status: "Null",
+        time: new Date(),
+        reset: false,
+        expired: false
     });
 
     /*
@@ -133,7 +138,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
                     connection.send("Connection established with Player 1");
                     const peerMessage: PeerMessage = {
                         _type: "Player1Address",
-                        address: props.playerAddress,
+                        address: props.playerAddress as Address,
                     }
                     connection.send(peerMessage);
                 });
@@ -183,7 +188,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
                     });
                 }
             } catch (err) {
-                console.log(`Error getting game info from Sepolia: ${err}`);
+                console.log(`Error retrieving game info from Sepolia: ${err}`);
             }
         }
     }
@@ -192,6 +197,65 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
     useInterval(async () => {
         if (contractAddress) getBlockchainInfo(); 
     }, 30000);
+
+    useEffect(() => {
+        if (moveInfo.p2Moved && !timer.expired) {
+            setTimer({ ...timer, status: "Null", expired: false });
+            setP2Response(moveInfo.p2Choice);
+        }
+    }, [moveInfo]);
+
+    const timeSinceLastAction = async () => {
+        if (contractAddress) {
+            try {
+                const [lastAction, timeout] = await Promise.all([
+                    props.publicClient.readContract({
+                        ...rpsContract,
+                        address: contractAddress,
+                        functionName: "lastAction",
+                    }),
+                    props.publicClient.readContract({
+                        ...rpsContract,
+                        address: contractAddress,
+                        functionName: "",
+                    })
+                ]);
+
+                const now = Math.round(Date.now() / 1000);
+                const secondsElapsed = now - lastAction;
+                const secondsToTimeout = timeout - secondsElapsed;
+                const newTime = new Date();
+
+                newTime.setSeconds(newTime.getSeconds() + secondsToTimeout);
+                setTimer({
+                    ...timer,
+                    status: "Running",
+                    time: newTime,
+                    reset: true,
+                    
+                })
+            } catch (err) {
+                console.log(`Error retrieving time since last action: ${err}`);
+            }
+        }
+    };
+
+    const p2Timeout = async () => {
+        console.log("Checking if Player 2 timed out...");
+
+        try {
+            const { request } = await props.publicClient.simulateContract({
+                ...rpsContract,
+                account: props.playerAddress as Address,
+                address: contractAddress,
+                functionName: "j2Timeout",
+            });
+
+            await props.walletClient.writeContract(request);
+        } catch (err) {
+            console.log(`Error checking if Player 2 timed out: ${err}`);
+        }
+    }
 
     return (
         <div>Hello!</div>
