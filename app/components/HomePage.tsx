@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/dist/client/router";
+import { useSearchParams } from "next/navigation";
 import { 
     createPublicClient,
     createWalletClient, 
@@ -34,7 +34,7 @@ export default function HomePage() {
 
     let saltRef = useRef<String | undefined>();
 
-    // const router = useRouter();
+    const searchParams = useSearchParams();
 
     const publicClient = createPublicClient({
         chain: sepolia,
@@ -110,6 +110,13 @@ export default function HomePage() {
         }
     }
 
+    const peerIdCheck = () => {
+        console.log("PEER ID CHECK")
+        console.log(searchParams.get("peerId"));
+        console.log("********************************");
+        console.log(searchParams);
+    }
+
     useEffect(() => {
         ;(async () => {
             if (hash) {
@@ -154,7 +161,22 @@ export default function HomePage() {
                     Please switch to the Sepolia Testnet to play!
                 </div>
             )}
-            {currentAccount && onRightChain && !receipt && (
+
+            { searchParams.get("peerId") === null ? (
+                <P1UI playerAddress={currentAccount} publicClient={publicClient} walletClient={walletClient} />
+            ) : (
+                <P2UI playerAddress={currentAccount} />
+            )}
+
+            {searchParams.get("peerId")}
+        </main>
+    )
+}
+
+// Spock: <span className="font-Icons">v</span>
+
+/*
+    {currentAccount && onRightChain && !receipt && (
                 <button onClick={() => createRPSLSGame(1, "0xA26644Bf5797F70243C00a8f713c7979a7295BF2", "0.001")}>
                     Deploy Contract
                 </button>
@@ -173,17 +195,4 @@ export default function HomePage() {
                     </div>
                 </>
             )}
-
-            <P1UI playerAddress={currentAccount} publicClient={publicClient} walletClient={walletClient} />
-
-
-            { /*router.query.peerId === undefined ? (
-                <P1UI playerAddress={currentAccount} />
-            ) : (
-                <P2UI playerAddress={currentAccount} />
-            )*/}
-        </main>
-    )
-}
-
-// Spock: <span className="font-Icons">v</span>
+*/

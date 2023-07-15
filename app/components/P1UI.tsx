@@ -15,6 +15,7 @@ import getRandomVal from "../../public/utils/getRandomVal";
 import initializePeer from "../../public/utils/initializePeer";
 import Timer from "../../public/utils/Timer";
 import { Winner, PeerMessage, MoveInfo, TimerSettings } from "../@types/types";
+import copyTextToClipboard from "@/public/utils/copyTextToClipboard";
 
 enum Weapon {
     "Null",
@@ -29,7 +30,7 @@ enum Weapon {
 const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: any }) => {
     const DEFAULT_STAKE = "0.0001";
 
-    const [stake, setStake] = useState<String>(DEFAULT_STAKE);
+    const [stake, setStake] = useState<string>(DEFAULT_STAKE);
     const [peerId, setPeerId] = useState<String>("");
     const [connected, setConnected] = useState<DataConnection>();
     const [p2Address, setP2Address] = useState<String>("");
@@ -75,7 +76,6 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
     const createRPSLSGame = async (
         choice: number,
         p2Address: string,
-        stake: string,
     ) => {
         if (!props.playerAddress) return;
         moveRef.current = choice;
@@ -156,7 +156,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
                         return console.log("Player 2 has connected");
                     } else if (data._type === "Player2Address") {
                         // SET TIMER
-                        return setP2Address(data.address)
+                        return setP2Address(data.address);
                     } else {
                         return console.log("");
                     }
@@ -355,7 +355,21 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
     }
 
     return (
-        <div>Hello!</div>
+        <div>
+            {!connected && (
+                <>
+                    <div>Waiting on Player 2 to connect...</div>
+                    <div>
+                        <button onClick={() => copyTextToClipboard(`localhost:3000/?peerId=${peerId}`)}>
+                            Click here to generate a link to share with another player!
+                        </button>
+                    </div>
+                </>
+            )}
+            {connected && p2Address && (
+                <div>Player 2 has connected!</div>
+            )}
+        </div>
     )
 }
 
