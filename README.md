@@ -57,7 +57,9 @@ Another issue I ran into was saving the salt - I need to have it persist past it
 
 For this project, I decided to use TypeScript and Next.js. TypeScript's type system allows, and even forces, me to create a solid codebase that is both maintainable and readable. Next.js is the perfect framework in this case given its great support for TypeScript and server-side rendering. With the two, I was able to create a strongly typed React app. I also styled the app using Tailwind CSS given it works exceptionally well with Next.js, and I can style components on the go without having to jump from file to file.
 
-I decided to use viem over Ethers for three reasons: it is significantly faster and more performant, I wanted to challenge myself to quickly adapt to a new TypeScript interface, and a number of codebases are beginning to migrate from Ethers v5 to viem.
+With respect to interfacing with Ethereum, I decided to use viem over Ethers for three reasons: it is significantly faster and more performant, I wanted to challenge myself to quickly adapt to a new TypeScript interface, and a number of codebases are beginning to migrate from Ethers v5 to viem.
+
+For the peer-to-peer programming, Peerjs was an obvious choice given it abstracts away all of the ice and signalling logic found in WebRTC so I was able to spend more time on the functionality of my app.
 
 # Acknowledgements
 
