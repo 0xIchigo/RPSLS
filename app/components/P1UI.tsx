@@ -14,17 +14,8 @@ import { rpsContract } from "../contracts/rpsContract";
 import getRandomVal from "../../public/utils/getRandomVal";
 import initializePeer from "../../public/utils/initializePeer";
 import Timer from "../../public/utils/Timer";
-import { Winner, PeerMessage, MoveInfo, TimerSettings } from "../@types/types";
+import { Winner, PeerMessage, MoveInfo, TimerSettings, Weapon } from "../@types/types";
 import copyTextToClipboard from "@/public/utils/copyTextToClipboard";
-
-enum Weapon {
-    "Null",
-    "Rock",
-    "Paper",
-    "Scissors",
-    "Spock",
-    "Lizard",
-}
 
 
 const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: any }) => {

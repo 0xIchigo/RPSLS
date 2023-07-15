@@ -1,3 +1,12 @@
+export enum Weapon {
+    "Null",
+    "Rock",
+    "Paper",
+    "Scissors",
+    "Spock",
+    "Lizard",
+};
+
 export type Winner = "Player1" | "Player2" | "Draw" | "Null";
 
 export type PeerMessage = 

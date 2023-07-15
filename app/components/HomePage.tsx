@@ -110,13 +110,6 @@ export default function HomePage() {
         }
     }
 
-    const peerIdCheck = () => {
-        console.log("PEER ID CHECK")
-        console.log(searchParams.get("peerId"));
-        console.log("********************************");
-        console.log(searchParams);
-    }
-
     useEffect(() => {
         ;(async () => {
             if (hash) {
@@ -165,7 +158,7 @@ export default function HomePage() {
             { searchParams.get("peerId") === null ? (
                 <P1UI playerAddress={currentAccount} publicClient={publicClient} walletClient={walletClient} />
             ) : (
-                <P2UI playerAddress={currentAccount} />
+                <P2UI playerAddress={currentAccount} publicClient={publicClient} walletClient={walletClient} peerId={searchParams.get("peerId")} />
             )}
 
             {searchParams.get("peerId")}
