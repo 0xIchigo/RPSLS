@@ -156,7 +156,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
                         // SET TIMER
                         return setP2Address(data.address);
                     } else {
-                        return console.log("");
+                        return;
                     }
                 })
             });

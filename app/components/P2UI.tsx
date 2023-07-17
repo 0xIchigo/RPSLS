@@ -8,7 +8,8 @@ import { DataConnection } from "peerjs";
 import { useInterval } from "usehooks-ts";
 import { rpsContract } from "../contracts/rpsContract";
 import Timer from "../../public/utils/Timer";
-import { Winner, MoveInfo, TimerSettings, Weapon } from "../@types/types";
+import { Winner, MoveInfo, TimerSettings, Weapon, PeerMessage } from "../@types/types";
+import initializePeer from "@/public/utils/initializePeer";
 
 
 const P2UI = (props: { playerAddress: String, publicClient: any, walletClient: any, peerId: string | null }) => {
@@ -21,7 +22,9 @@ const P2UI = (props: { playerAddress: String, publicClient: any, walletClient: a
     const [requiredStake, setRequiredStake] = useState<string>(DEFAULT_STAKE);
     const [contractAddress, setContractAddress] = useState<Hash>();
     const [connected, setConnected] = useState<DataConnection>();
+    const [winner, setWinner] = useState<Winner>();
     const [p1Address, setP1Address] = useState<String>("");
+    const [p1Choice, setP1Choice] = useState<Number>();
     const [moveInfo, setMoveInfo] = useState<MoveInfo>({
         p1Moved: false,
         p2Moved: false,
@@ -34,6 +37,51 @@ const P2UI = (props: { playerAddress: String, publicClient: any, walletClient: a
         reset: false,
         expired: false
     });
+
+    useEffect(() => {
+        console.log("Establishing connection with your peer (Player One)...");
+
+        (async () => {
+            if (!props.peerId) return;
+
+            const peer = await initializePeer(""); // Double-check the default peerId
+            const connect = peer.connect(props.peerId, { reliable: true });
+            setConnected(connect);
+
+            connect.on("error", (e) => console.log(`Error: ${e}`));
+            connect.on("open", () => {
+                let peerMessage: PeerMessage = {
+                    _type: "Connected"
+                };
+                connect.send(peerMessage);
+
+                peerMessage = {
+                    _type: "Player2Address",
+                    address: props.playerAddress,
+                };
+                connect.send(peerMessage);
+
+                /*
+                    We can ignore TypeScript's concerns of data being type unknown as the only 
+                    data we will be passing P2P will be of type PeerMessage
+                */
+                //@ts-ignore
+                connect.on("data", (data: PeerMessage) => {
+                    if (data._type === "Player1Address") {
+                        setP1Address(data.address);
+                    } else if (data._type === "ContractAddress") {
+                        setContractAddress(data.address);
+                    } else if (data._type === "Player1Choice") {
+                        setP1Choice(data.choice);
+                    } else if (data._type === "Winner") {
+                        setWinner(data.player);
+                    } else {
+                        return;
+                    }
+                })
+            })
+        })
+    }, []);
 
     const sendP2Choice = async (
         choice: number,
