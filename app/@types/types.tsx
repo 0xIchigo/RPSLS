@@ -15,12 +15,14 @@ export type PeerMessage =
     { _type: "ContractAddress"; address: `0x${string}` } |
     { _type: "Winner"; player: Winner } |
     { _type: "Player1Choice"; choice: Number } |
-    { _type: "Connected"};
+    { _type: "Connected"} |
+    { _type: "Stake"; stakeAmount: string };
 
 export type MoveInfo = {
     p1Moved: Boolean,
     p2Moved: Boolean,
     p2Choice: Number
+    stake?: String
 };
 
 export type TimerSettings = {

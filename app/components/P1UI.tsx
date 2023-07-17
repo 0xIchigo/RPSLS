@@ -70,7 +70,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
     ) => {
         if (!props.playerAddress) return;
         moveRef.current = choice;
-        setStake(stake);
+        // setStake(stake);
 
         const account = props.playerAddress as Address;
         setGenerateNewSalt(true);
@@ -100,6 +100,13 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
             let peerMessage: PeerMessage = {
                 _type: "ContractAddress",
                 address: contractAddress!,
+            };
+
+            connected?.send(peerMessage);
+
+            peerMessage = {
+                _type: "Stake",
+                stakeAmount: stake,
             };
 
             connected?.send(peerMessage);
@@ -188,7 +195,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
     // Every 30 seconds we check the chain to see if P2 moved
     useInterval(async () => {
         if (contractAddress) getBlockchainInfo(); 
-    }, 30000);
+    }, 15000);
 
     useEffect(() => {
         if (moveInfo.p2Moved && !timer.expired) {
@@ -247,7 +254,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
         } catch (err) {
             console.log(`Error checking if Player 2 timed out: ${err}`);
         }
-    }
+    };
 
     const timerComponent = (
         timer: TimerSettings,
@@ -265,7 +272,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
         return (
             <span></span>
         )
-    }
+    };
 
     const timerExpired = (
         winner: Winner,
