@@ -23,7 +23,7 @@ const P2UI = (props: { playerAddress: String, publicClient: any, walletClient: a
     const [contractAddress, setContractAddress] = useState<Hash>();
     const [connected, setConnected] = useState<DataConnection>();
     const [winner, setWinner] = useState<Winner>();
-    const [p1Address, setP1Address] = useState<String>("");
+    const [p1Address, setP1Address] = useState<string>("");
     const [p1Choice, setP1Choice] = useState<Number>();
     const [moveInfo, setMoveInfo] = useState<MoveInfo>({
         p1Moved: false,
@@ -38,55 +38,59 @@ const P2UI = (props: { playerAddress: String, publicClient: any, walletClient: a
         expired: false
     });
 
+    // Connecting with Player One
     useEffect(() => {
         console.log("Establishing connection with your peer (Player One)...");
 
         (async () => {
             if (!props.peerId) return;
 
-            const peer = await initializePeer(""); // Double-check the default peerId
-            const connect = peer.connect(props.peerId, { reliable: true });
-            setConnected(connect);
+            const peer = await initializePeer(); 
+            const conn = await peer.connect(props.peerId, { reliable: true });
+            setConnected(conn);
 
-            connect.on("error", (e) => console.log(`Error: ${e}`));
-            connect.on("open", () => {
+            conn.on("error", (e) => console.log(`Error: ${e}`));
+            conn.on("open", () => {
                 let peerMessage: PeerMessage = {
                     _type: "Connected"
                 };
-                connect.send(peerMessage);
+                conn.send(peerMessage);
 
                 peerMessage = {
                     _type: "Player2Address",
                     address: props.playerAddress,
                 };
-                connect.send(peerMessage);
+                conn.send(peerMessage);
 
                 /*
                     We can ignore TypeScript's concerns of data being type unknown as the only 
                     data we will be passing P2P will be of type PeerMessage
                 */
                 //@ts-ignore
-                connect.on("data", (data: PeerMessage) => {
+                conn.on("data", (data: PeerMessage) => {
                     if (data._type === "Player1Address") {
-                        setP1Address(data.address);
+                         return setP1Address(data.address);
+                        //return console.log(`Connected with ${data.address}`);
                     } else if (data._type === "ContractAddress") {
-                        setContractAddress(data.address);
+                        return setContractAddress(data.address);
+                        //return console.log(`Contract address: ${data.address}`);
                     } else if (data._type === "Player1Choice") {
-                        setP1Choice(data.choice);
+                        return setP1Choice(data.choice);
+                       // return console.log(`Player One chose ${data.choice}`);
                     } else if (data._type === "Winner") {
-                        setWinner(data.player);
+                        return setWinner(data.player);
+                        //return console.log(`The winner has been decided: ${data.player}`);
                     } else {
-                        return;
+                        return console.log("Nothing to see here...possibly invalid data._type ?");
                     }
-                })
-            })
-        })
+                });
+            });
+        })();
     }, []);
 
     const sendP2Choice = async (
         choice: number,
     ) => {
-        setChoice(choice);
         try {
             const { request } = await props.publicClient.simulateContract({
                 ...rpsContract,
@@ -97,8 +101,12 @@ const P2UI = (props: { playerAddress: String, publicClient: any, walletClient: a
                 value: parseEther(requiredStake)
             });
 
-            await props.walletClient.writeContract(request);
+            const hash = await props.walletClient.writeContract(request);
+            const receipt = await props.publicClient.waitForTransactionReceipt({ hash });
 
+            if (receipt.status !== "success") throw Error(`Transaction failed: ${receipt}`);
+
+            setChoice(choice);
             timeSinceLastAction();
         } catch (err) {
             console.log(`Error sending choice: ${err}`);
@@ -191,7 +199,7 @@ const P2UI = (props: { playerAddress: String, publicClient: any, walletClient: a
         }
     };
 
-    const p1Timeout = async () => {
+    const p1Timeout = async (): Promise<Boolean> => {
         console.log("Checking if Player 2 timed out...");
 
         try {
@@ -202,9 +210,15 @@ const P2UI = (props: { playerAddress: String, publicClient: any, walletClient: a
                 functionName: "j1Timeout",
             });
 
-            await props.walletClient.writeContract(request);
+            const hash = await props.walletClient.writeContract(request);
+            const receipt = await props.publicClient.waitForTransactionReceipt({ hash });
+
+            if (receipt.status !== "success") throw Error(`Transaction failed: ${receipt}`);
+
+            return true;
         } catch (err) {
             console.log(`Error checking if Player 2 timed out: ${err}`);
+            return false;
         }
     };
 
@@ -260,6 +274,9 @@ const P2UI = (props: { playerAddress: String, publicClient: any, walletClient: a
             ):
                 <div>Hello!</div>
             }
+            {connected && p1Address && (
+                <div>Player One's address is {p1Address}</div>
+            )}
         </>
     )
 }
