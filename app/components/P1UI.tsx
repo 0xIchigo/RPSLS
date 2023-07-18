@@ -84,6 +84,10 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
                 value: parseEther(stake),
             });
 
+            const receipt = await props.publicClient.waitForTransactionReceipt({ hash });
+
+            if (receipt.status !== "success") throw Error(`Transaction failed: ${receipt}`);
+
             setHash(hash);
 
             // Resetting moveInfo for the new game after Player One moves
@@ -92,8 +96,6 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
                 p2Moved: false,
                 p2Choice: 0,
             });
-
-            const receipt = await props.publicClient.waitForTransactionReceipt({ hash });
             setContractAddress(receipt.contractAddress);
             console.log(`Game Address: ${contractAddress}`);
 
@@ -112,8 +114,8 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
             connected?.send(peerMessage);
 
 
-        } catch {
-            console.log("Failed to deploy contract - invalid data provided!");
+        } catch (err) {
+            console.log(`Failed to deploy contract: ${err}`);
             console.log("Please ensure to pass the correct Player 2 address (with the leading 0x prefix), and the numeric value of Ether you wish to stake");
         }
         setGenerateNewSalt(false);
@@ -239,7 +241,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
         }
     };
 
-    const p2Timeout = async () => {
+    const p2Timeout = async (): Promise<Boolean> => {
         console.log("Checking if Player 2 timed out...");
 
         try {
@@ -250,9 +252,16 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
                 functionName: "j2Timeout",
             });
 
-            await props.walletClient.writeContract(request);
+            const hash = await props.walletClient.writeContract(request);
+            const receipt = await props.publicClient.waitForTransactionReceipt({ hash });
+
+            if (receipt.status !== "success") throw Error(`Transaction failed: ${receipt}`);
+
+            return true;
+
         } catch (err) {
             console.log(`Error checking if Player 2 timed out: ${err}`);
+            return false;
         }
     };
 
@@ -335,7 +344,10 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
                 args: [moveRef.current, saltRef.current]
             });
 
-            await props.walletClient.writeContract(request);
+            const hash = await props.walletClient.writeContract(request);
+            const receipt = await props.publicClient.waitForTransactionReceipt({ hash });
+
+            if (receipt.status !== "success") throw Error(`Transaction failed: ${receipt}`);
 
             const winningPlayer = decideWinner();
             setWinner(winningPlayer);

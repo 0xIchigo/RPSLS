@@ -1,7 +1,9 @@
 import Peer from "peerjs";
 
-const initializePeer = async (id: string): Promise<Peer> => {
-    const peer = new Peer(id);
+const initializePeer = async (id?: string): Promise<Peer> => {
+    let peer: Peer;
+
+    id ? peer = new Peer(id) : peer = new Peer();
 
     try {
         await new Promise<void>((resolve, reject) => {
