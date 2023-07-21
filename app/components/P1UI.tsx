@@ -1,8 +1,10 @@
 import { useState, 
     useEffect, 
     useRef,
+    useReducer,
     ChangeEvent 
 } from "react";
+import Image from "next/Image";
 import { useInterval } from "usehooks-ts";
 import { DataConnection } from "peerjs";
 import { nanoid } from "nanoid";
@@ -12,24 +14,35 @@ import {
     parseEther,
     Address,
     Hash,
-    Hex
+    Hex,
 } from "viem";
 import { rpsContract } from "../contracts/rpsContract";
 import getRandomVal from "../../public/utils/getRandomVal";
 import initializePeer from "../../public/utils/initializePeer";
 import Timer from "../../public/utils/Timer";
+import useForceUpdate from "../../public/utils/useForceUpdate";
 import { Winner, PeerMessage, MoveInfo, TimerSettings, Weapon } from "../@types/types";
 import copyTextToClipboard from "@/public/utils/copyTextToClipboard";
 
 
 const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: any }) => {
+    const forceUpdate = useForceUpdate();
     const DEFAULT_STAKE = "0.0001";
+    const IMAGES =  [
+        "",
+        "/images/rock.png",
+        "/images/paper.png",
+        "/images/scissors.png",
+        "/images/spock.png",
+        "/images/lizard.png",
+    ];
 
     const [stake, setStake] = useState<string>(DEFAULT_STAKE);
     const [peerId, setPeerId] = useState<String>("");
     const [connected, setConnected] = useState<DataConnection>();
     const [p2Address, setP2Address] = useState<string>("");
     const [p2Response, setP2Response] = useState<Number>(0);
+    const [currentChoice, setCurrentChoice] = useState<Weapon>();
     const [winner, setWinner] = useState<Winner>("Null");
     const [hash, setHash] = useState<Hash>();
     const [contractAddress, setContractAddress] = useState<Hash>();
@@ -69,12 +82,11 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
    let moveRef = useRef<Weapon | undefined>();
 
     const createRPSLSGame = async (
-        choice: number,
-        p2Address: string,
     ) => {
         if (!props.playerAddress) return;
-        moveRef.current = choice;
-        // setStake(stake);
+        if (moveRef.current === undefined) return;
+
+        let choice = Object.keys(Weapon).indexOf(moveRef.current as unknown as string);
 
         const account = props.playerAddress as Address;
         setGenerateNewSalt(true);
@@ -355,9 +367,9 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             });
 
             const hash = await props.walletClient.writeContract(request);
-            const receipt = await props.publicClient.waitForTransactionReceipt({ hash });
+            const receiptWinnerTxt = await props.publicClient.waitForTransactionReceipt({ hash });
 
-            if (receipt.status !== "success") throw Error(`Transaction failed: ${receipt}`);
+            if (receiptWinnerTxt.status !== "success") throw Error(`Transaction failed: ${receiptWinnerTxt}`);
 
             const winningPlayer = decideWinner();
             setWinner(winningPlayer);
@@ -382,6 +394,20 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         setStake(e.target.value);
     }
 
+    const handleChoice = (choice: number) => {
+        moveRef.current = Weapon[choice] as unknown as Weapon;
+        forceUpdate();
+    }
+
+    useEffect(() => {
+        ;(async () => {
+            if (hash) {
+                const receipt = await props.publicClient.waitForTransactionReceipt({ hash })
+                setReceipt(receipt);
+            }
+        })()
+    }, [hash, props.publicClient]);
+
     return (
         <div>
             {!connected && props.playerAddress !== "" && (
@@ -402,42 +428,73 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             )}
             {connected && p2Address !== "" && (
                 <div>
-                    <div className="">
+                    <div className="flex flex-col justify-center items-center mt-4">
+                        <div className="">
+                            Connected with Player Two!
+                        </div>
                         <div>
-                            Player Two has joined!
+                            Your opponent: <a target="_blank" href={`https://sepolia.etherscan.io/address/${p2Address}`}>{p2Address}</a>
                         </div>
 
-                        {!contractAddress ? (
+                        {contractAddress === undefined && (
                             <>
-                                <div>
-                                    <span>
+                                <div className="flex flex-row mt-10">
+                                    {IMAGES.map((image, index) => {
+                                        if (index === 0) return;
+                                        return (
+                                            <div
+                                                key={index}
+                                                onClick={() => {
+                                                    handleChoice(index)
+                                                }}
+                                            >
+                                                <Image
+                                                    src={image}
+                                                    alt=""
+                                                    width={250}
+                                                    height={250}
+                                                />
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                                <div className="flex flex-row justify-between items-center mt-4">
+                                    <div className="mr-2">
                                         How much Ether would you like to stake?
-                                    </span>
+                                    </div>
                                     <input  
                                         name="stakeInput"
                                         id="stakeInput"
+                                        className="appearance-none w-24 py-1 px-4 bg-black focus:border-green focus:outline-none text-green text-end"
                                         placeholder={DEFAULT_STAKE}
                                         onChange={(e) => onEnterStake(e)} 
                                     />
+                                    <div className="ml-2">
+                                        Ether
+                                    </div>
                                 </div>
+                                <div>
+                                    You have selected: {moveRef.current}
+                                </div>
+                                <button
+                                    className="mt-4"
+                                    onClick={() => createRPSLSGame()}
+                                >
+                                    Create Match
+                                </button>
                             </>
-                        ) : (<></>)}
-
-
-
-                        <div>
-                            {timerComponent(timer, setTimer)}
-                            {timerExpired(winner, timer, p2Timeout)}
-                        </div>
-
-                        <a href={`https://sepolia.etherscan.io/address/${p2Address}`}>
-                            <span>
-                                Your opponent: {p2Address}
-                            </span>
-                        </a>
-                        <a href={`https://sepolia.etherscan.io/address/${contractAddress}`}>
-                            Match: {contractAddress}
-                        </a>
+                        )}
+                        {receipt && (
+                            <>
+                                <div>
+                                    {timerComponent(timer, setTimer)}
+                                    {timerExpired(winner, timer, p2Timeout)}
+                                </div>
+                                <a href={`https://sepolia.etherscan.io/address/${contractAddress}`}>
+                                    Match: {contractAddress}
+                                </a>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
