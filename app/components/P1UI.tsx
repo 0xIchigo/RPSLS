@@ -1,4 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, 
+    useEffect, 
+    useRef,
+    ChangeEvent 
+} from "react";
 import { useInterval } from "usehooks-ts";
 import { DataConnection } from "peerjs";
 import { nanoid } from "nanoid";
@@ -99,6 +103,8 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             setContractAddress(receipt.contractAddress);
             console.log(`Game Address: ${contractAddress}`);
 
+            await timeSinceLastAction();
+
             let peerMessage: PeerMessage = {
                 _type: "ContractAddress",
                 address: contractAddress!,
@@ -198,10 +204,10 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         }
     }
 
-    // Every 30 seconds we check the chain to see if P2 moved
+    // Every 10 seconds we check the chain to see if P2 moved
     useInterval(async () => {
         if (contractAddress) getBlockchainInfo(); 
-    }, 15000);
+    }, 10000);
 
     useEffect(() => {
         if (moveInfo.p2Moved && !timer.expired) {
@@ -222,7 +228,7 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     props.publicClient.readContract({
                         ...rpsContract,
                         address: contractAddress,
-                        functionName: "",
+                        functionName: "TIMEOUT",
                     })
                 ]);
 
@@ -368,23 +374,72 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         }
     }
 
+    const onEnterStake = (e: ChangeEvent<HTMLInputElement>) => {
+        e.preventDefault();
+        const isInvalid = Number.isNaN(Number(e.target.value));
+        if (isInvalid) return;
+
+        setStake(e.target.value);
+    }
+
     return (
         <div>
-            {!connected && (
-                <>
+            {!connected && props.playerAddress !== "" && (
+                <div className="flex flex-col justify-center items-center mt-4">
                     <div>Waiting on Player 2 to connect...</div>
                     <div>
                         <button onClick={() => copyTextToClipboard(`localhost:3000/?peerId=${peerId}`)}>
                             Click here to generate a link to share with another player!
                         </button>
                     </div>
-                </>
+                </div>
             )}
-            {connected && p2Address && (
-                <div>Player 2 has connected!</div>
+            {connected && p2Address === "" && (
+                <div>
+                    <div>Waiting on Player 2 to connect their wallet...</div>
+                    <div>We can<span>&#39;</span>t start the game without their address!</div>
+                </div>
             )}
-            {p2Address !== "" && (
-                <div>Player 2s address: {p2Address}</div>
+            {connected && p2Address !== "" && (
+                <div>
+                    <div className="">
+                        <div>
+                            Player Two has joined!
+                        </div>
+
+                        {!contractAddress ? (
+                            <>
+                                <div>
+                                    <span>
+                                        How much Ether would you like to stake?
+                                    </span>
+                                    <input  
+                                        name="stakeInput"
+                                        id="stakeInput"
+                                        placeholder={DEFAULT_STAKE}
+                                        onChange={(e) => onEnterStake(e)} 
+                                    />
+                                </div>
+                            </>
+                        ) : (<></>)}
+
+
+
+                        <div>
+                            {timerComponent(timer, setTimer)}
+                            {timerExpired(winner, timer, p2Timeout)}
+                        </div>
+
+                        <a href={`https://sepolia.etherscan.io/address/${p2Address}`}>
+                            <span>
+                                Your opponent: {p2Address}
+                            </span>
+                        </a>
+                        <a href={`https://sepolia.etherscan.io/address/${contractAddress}`}>
+                            Match: {contractAddress}
+                        </a>
+                    </div>
+                </div>
             )}
         </div>
     )
