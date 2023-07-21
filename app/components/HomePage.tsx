@@ -27,7 +27,7 @@ import  P2UI from "./P2UI"
 const SEPOLIA_ID = "0xaa36a7";
 
 export default function HomePage() {
-    const [currentAccount, setCurrentAccount] = useState<String>("");
+    const [currentAccount, setCurrentAccount] = useState<string>("");
     const [hash, setHash] = useState<Hash>();
     const [receipt, setReceipt] = useState<TransactionReceipt>();
     const [onRightChain, setOnRightChain] = useState<Boolean>(false);
@@ -117,7 +117,7 @@ export default function HomePage() {
                 setReceipt(receipt);
             }
         })()
-    }, [hash]);
+    }, [hash, publicClient]);
 
     useEffect(() => {
         checkWalletConnected();
@@ -158,10 +158,8 @@ export default function HomePage() {
             { searchParams.get("peerId") === null ? (
                 <P1UI playerAddress={currentAccount} publicClient={publicClient} walletClient={walletClient} />
             ) : (
-                <P2UI playerAddress={currentAccount} publicClient={publicClient} walletClient={walletClient} peerId={searchParams.get("peerId")} />
+                <P2UI playerAddress={currentAccount} publicClient={publicClient} walletClient={walletClient} peerId={searchParams.get("peerId") as string} />
             )}
-
-            {searchParams.get("peerId")}
         </main>
     )
 }

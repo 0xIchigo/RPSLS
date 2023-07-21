@@ -4,7 +4,7 @@ const initializePeer = async (id?: string): Promise<Peer> => {
   const Peer = (await import("peerjs")).default;
 
   return new Promise((resolve, reject) => {
-    // @ts-ignore
+    //@ts-ignore
     const peer = new Peer(id);
     peer.on("error", (err) => {
       console.error(err);

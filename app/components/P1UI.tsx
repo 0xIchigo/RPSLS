@@ -18,7 +18,7 @@ import { Winner, PeerMessage, MoveInfo, TimerSettings, Weapon } from "../@types/
 import copyTextToClipboard from "@/public/utils/copyTextToClipboard";
 
 
-const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: any }) => {
+const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: any }) => {
     const DEFAULT_STAKE = "0.0001";
 
     const [stake, setStake] = useState<string>(DEFAULT_STAKE);
@@ -122,10 +122,10 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
     }
 
     useEffect(() => {
-        console.log("Trying to create a connection with your peer...");
+        console.log("Trying to reach PeerJS servers...");
 
         const createPeer = async () => {
-            console.log("Creating peer...");
+            console.log("Trying to create a peer...");
 
             const id = `RPSLS-${nanoid()}`;
             const peer = await initializePeer(id);
@@ -138,7 +138,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
                 conn.on("error", (e) => console.log(`Connection Error: ${e}`));
 
                 conn.on("open", () => {
-                    conn.send("Connection established with Player 1");
+                    conn.send("Connection with Player One established");
                     const peerMessage: PeerMessage = {
                         _type: "Player1Address",
                         address: props.playerAddress,
@@ -157,18 +157,19 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
                     if (data._type === "Connected") {
                         return console.log("Player 2 has connected");
                     } else if (data._type === "Player2Address") {
-                        // SET TIMER
                         console.log(`Player Two's address: ${data.address}`);
-                        return setP2Address(data.address);
+
+                        setTimer({ ...timer, expired: false, status: "Null" });
+                        return setP2Address(data.address as string);
                     } else {
-                        return console.log("Wrong data._type");
+                        return;
                     }
                 });
             });
         };
 
         createPeer();
-    }, []);
+    }, [props.playerAddress, timer]);
 
     const getBlockchainInfo = async () => {
         if (contractAddress) {
@@ -207,7 +208,7 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
             setTimer({ ...timer, status: "Null", expired: false });
             setP2Response(moveInfo.p2Choice);
         }
-    }, [moveInfo]);
+    }, [moveInfo, timer]);
 
     const timeSinceLastAction = async () => {
         if (contractAddress) {
@@ -381,6 +382,9 @@ const P1UI = (props: { playerAddress: String, publicClient: any, walletClient: a
             )}
             {connected && p2Address && (
                 <div>Player 2 has connected!</div>
+            )}
+            {p2Address !== "" && (
+                <div>Player 2s address: {p2Address}</div>
             )}
         </div>
     )

@@ -12,7 +12,7 @@ export type Winner = "Player1" | "Player2" | "Draw" | "Null";
 export type PeerMessage = 
     { _type: "Player1Address"; address: string } |
     { _type: "Player2Address"; address: string } |
-    { _type: "ContractAddress"; address: `0x${string}` } |
+    { _type: "ContractAddress"; address: string } |
     { _type: "Winner"; player: Winner } |
     { _type: "Player1Choice"; choice: Number } |
     { _type: "Connected"} |
