@@ -1,4 +1,4 @@
-const getRandomVal = () => {
+const getRandomVal = (): bigint => {
     const newArray = new Uint8Array(32);
     crypto.getRandomValues(newArray);
 

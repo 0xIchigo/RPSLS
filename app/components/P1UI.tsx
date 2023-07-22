@@ -15,6 +15,7 @@ import {
     Address,
     Hash,
     Hex,
+    TransactionReceipt
 } from "viem";
 import { rpsContract } from "../contracts/rpsContract";
 import getRandomVal from "../../public/utils/getRandomVal";
@@ -42,11 +43,10 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
     const [connected, setConnected] = useState<DataConnection>();
     const [p2Address, setP2Address] = useState<string>("");
     const [p2Response, setP2Response] = useState<Number>(0);
-    const [currentChoice, setCurrentChoice] = useState<Weapon>();
+    const [createGameReceipt, setCreateGameReceipt] = useState<TransactionReceipt>();
     const [winner, setWinner] = useState<Winner>("Null");
-    const [hash, setHash] = useState<Hash>();
+    const [createGameHash, setCreateGameHash] = useState<Hash>();
     const [contractAddress, setContractAddress] = useState<Hash>();
-    const [generateNewSalt, setGenerateNewSalt] = useState<Boolean>(false);
     const [moveInfo, setMoveInfo] = useState<MoveInfo>({
         p1Moved: false,
         p2Moved: false,
@@ -64,80 +64,122 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         accessible from outside the component or the browser's console. This way we can persist the
         value of the salt between functions.
     */
-    let saltRef = useRef<bigint | undefined>();
-
-    /*
-        We generate a new salt every game such that any sort of pass the hash (PtH) attack is prevented -
-        an attacker that knows the salt of the first game has no insight into the salt used in the second
-        game
-    */
-    useEffect(() => {
-        if (generateNewSalt) saltRef.current = getRandomVal();
-    }, [generateNewSalt])
+    let saltRef = useRef<bigint>();
 
     /*
         Using the logic above, we can also use a useRef() hook to keep track of Player 1's move so we can 
         pass it in later to determine a winner via the solve() function in rps.sol
     */
-   let moveRef = useRef<Weapon | undefined>();
+   let moveRef = useRef<Weapon>();
 
     const createRPSLSGame = async (
     ) => {
         if (!props.playerAddress) return;
         if (moveRef.current === undefined) return;
 
-        let choice = Object.keys(Weapon).indexOf(moveRef.current as unknown as string);
-
         const account = props.playerAddress as Address;
-        setGenerateNewSalt(true);
-        const p1Hash: Hex = keccak256(encodePacked(["uint8", "uint256"], [choice, saltRef.current as bigint])) as Hex;
+        let choice = Object.keys(Weapon).indexOf(moveRef.current as unknown as string) - 6;
+
+        /*
+            We generate a new salt every game such that any sort of pass the hash (PtH) attack is prevented -
+            an attacker that knows the salt of the first game has no insight into the salt used in the second
+            game
+        */
+        saltRef.current = getRandomVal() as unknown as bigint;
+        forceUpdate();
+        console.log(p2Address);
+
+        const p1Hash = keccak256(encodePacked(["uint8", "uint256"], [choice, saltRef.current])) as Hex;
 
         try {
-            const hash = await props.walletClient.deployContract({
+            const hash: Hash = await props.walletClient.deployContract({
                 ...rpsContract,
                 account,
-                args: [p1Hash, p2Address as Address],
+                args: [p1Hash, p2Address],
                 value: parseEther(stake),
             });
 
-            const receipt = await props.publicClient.waitForTransactionReceipt({ hash });
-
-            if (receipt.status !== "success") throw Error(`Transaction failed: ${receipt}`);
-
-            setHash(hash);
-
-            // Resetting moveInfo for the new game after Player One moves
-            setMoveInfo({
-                p1Moved: true,
-                p2Moved: false,
-                p2Choice: 0,
-            });
-            setContractAddress(receipt.contractAddress);
-            console.log(`Game Address: ${contractAddress}`);
-
-            await timeSinceLastAction();
-
-            let peerMessage: PeerMessage = {
-                _type: "ContractAddress",
-                address: contractAddress!,
-            };
-
-            connected?.send(peerMessage);
-
-            peerMessage = {
-                _type: "Stake",
-                stakeAmount: stake,
-            };
-
-            connected?.send(peerMessage);
-
-
+            setCreateGameHash(hash);
+            console.log("Successfully set hash");
+            console.log(`Hash: ${hash}`);
         } catch (err) {
             console.log(`Failed to deploy contract: ${err}`);
             console.log("Please ensure to pass the correct Player 2 address (with the leading 0x prefix), and the numeric value of Ether you wish to stake");
+            setCreateGameHash(undefined);
         }
-        setGenerateNewSalt(false);
     }
+
+    useEffect(() => {
+        const fetchReceipt = async () => {
+            if (createGameHash) {
+                console.log("Inside the if condition for createGameHash async func");
+
+                try {
+                    const receipt: TransactionReceipt = await props.publicClient.waitForTransactionReceipt({ hash: createGameHash });
+                    console.log('Setting game receipt!');
+                    setCreateGameReceipt(receipt);
+                    console.log(`Game receipt set: ${createGameReceipt}`);
+                } catch (err) {
+                    console.error(err);
+                    // Retry after 5 seconds if an error occurred
+                    setTimeout(fetchReceipt, 5000);
+                }
+            }
+        };
+        fetchReceipt();
+
+        /*
+        (async () => {
+            if (createGameHash) {
+                console.log("Inside if condition for createGameHash")
+                const receipt = await props.publicClient.waitForTransactionReceipt({ hash: createGameHash });
+                console.log("Setting game receipt!");
+
+                setCreateGameReceipt(receipt);
+                console.log("Game receipt set!");
+            }
+        })();
+        */
+    }, [createGameHash, props.publicClient, createGameReceipt])
+
+    /*
+        We can ignore a lot of TypeScript's warnings as this code will only execute if the
+        game has been created. For a game to be created: both players must have their wallets
+        connected, both players will be connected via Peer.js, and createGameReceipt will have
+        a .contractAddress field
+    */
+    useEffect(() => {
+        ;(async () => {
+            if (createGameReceipt) {
+                // Resetting moveInfo for the new game after Player One moves
+                setMoveInfo({
+                    p1Moved: true,
+                    p2Moved: false,
+                    p2Choice: 0,
+                });
+                //@ts-ignore
+                setContractAddress(createGameReceipt.contractAddress);
+                console.log(`Game Address: ${contractAddress}`);
+
+                await timeSinceLastAction();
+
+                let peerMessage: PeerMessage = {
+                    _type: "ContractAddress",
+                    address: contractAddress!,
+                };
+
+                connected?.send(peerMessage);
+
+                peerMessage = {
+                    _type: "Stake",
+                    stakeAmount: stake,
+                };
+
+                connected?.send(peerMessage);
+            }
+        })
+        // eslint-disable-next-line
+    }, [createGameReceipt])
 
     useEffect(() => {
         console.log("Trying to reach PeerJS servers...");
@@ -399,15 +441,6 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         forceUpdate();
     }
 
-    useEffect(() => {
-        ;(async () => {
-            if (hash) {
-                const receipt = await props.publicClient.waitForTransactionReceipt({ hash })
-                setReceipt(receipt);
-            }
-        })()
-    }, [hash, props.publicClient]);
-
     return (
         <div>
             {!connected && props.playerAddress !== "" && (
@@ -484,7 +517,7 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                                 </button>
                             </>
                         )}
-                        {receipt && (
+                        {contractAddress && (
                             <>
                                 <div>
                                     {timerComponent(timer, setTimer)}
