@@ -25,7 +25,6 @@ import useForceUpdate from "../../public/utils/useForceUpdate";
 import { Winner, PeerMessage, MoveInfo, TimerSettings, Weapon } from "../@types/types";
 import copyTextToClipboard from "@/public/utils/copyTextToClipboard";
 
-
 const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: any }) => {
     const forceUpdate = useForceUpdate();
     const DEFAULT_STAKE = "0.0001";
@@ -112,13 +111,16 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
     useEffect(() => {
         const fetchReceipt = async () => {
             if (createGameHash) {
-                console.log("Inside the if condition for createGameHash async func");
-
                 try {
                     const receipt: TransactionReceipt = await props.publicClient.waitForTransactionReceipt({ hash: createGameHash });
-                    console.log('Setting game receipt!');
-                    setCreateGameReceipt(receipt);
-                    console.log(`Game receipt set: ${createGameReceipt}`);
+                    if (receipt.status !== "success") {
+                        throw Error(`Transaction failed: ${receipt}`);
+                    } else {
+                        setCreateGameReceipt(receipt);
+                        console.log(`Contract address: ${receipt.contractAddress}`);
+    
+                        setContractAddress(receipt.contractAddress!);
+                    }
                 } catch (err) {
                     console.error(err);
                     // Retry after 5 seconds if an error occurred
@@ -517,7 +519,7 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                                 </button>
                             </>
                         )}
-                        {contractAddress && (
+                        {contractAddress !== undefined && (
                             <>
                                 <div>
                                     {timerComponent(timer, setTimer)}

@@ -14,17 +14,22 @@ import {
     stringify,
     encodePacked,
     keccak256, 
-    parseEther
+    parseEther,
+    webSocket
 } from "viem";
 import { sepolia } from "viem/chains";
 import "viem/window";
 import { rpsContract } from "../contracts/rpsContract";
 import getRandomVal from "../../public/utils/getRandomVal";
 
+import dotenv from "dotenv";
+dotenv.config();
+
 import  P1UI  from "./P1UI";
 import  P2UI from "./P2UI"
 
 const SEPOLIA_ID = "0xaa36a7";
+const transport = webSocket(process.env.REACT_APP_SEPOLIA as string);
 
 export default function HomePage() {
     const [currentAccount, setCurrentAccount] = useState<string>("");
@@ -38,7 +43,7 @@ export default function HomePage() {
 
     const publicClient = createPublicClient({
         chain: sepolia,
-        transport: http()
+        transport,
     });
 
     const walletClient = createWalletClient({
@@ -160,14 +165,7 @@ export default function HomePage() {
             ) : (
                 <P2UI playerAddress={currentAccount} publicClient={publicClient} walletClient={walletClient} peerId={searchParams.get("peerId") as string} />
             )}
-        </main>
-    )
-}
-
-// Spock: <span className="font-Icons">v</span>
-
-/*
-    {currentAccount && onRightChain && !receipt && (
+            {currentAccount && onRightChain && !receipt && (
                 <button onClick={() => createRPSLSGame(1, "0xA26644Bf5797F70243C00a8f713c7979a7295BF2", "0.001")}>
                     Deploy Contract
                 </button>
@@ -186,4 +184,9 @@ export default function HomePage() {
                     </div>
                 </>
             )}
-*/
+        </main>
+    )
+}
+
+// Spock: <span className="font-Icons">v</span>
+
