@@ -1,7 +1,6 @@
 import { useState, 
     useEffect, 
     useRef,
-    useReducer,
     ChangeEvent 
 } from "react";
 import Image from "next/Image";
@@ -22,20 +21,12 @@ import getRandomVal from "../../public/utils/getRandomVal";
 import initializePeer from "../../public/utils/initializePeer";
 import Timer from "../../public/utils/Timer";
 import useForceUpdate from "../../public/utils/useForceUpdate";
+import copyTextToClipboard from "../../public/utils/copyTextToClipboard";
+import { IMAGES, DEFAULT_STAKE } from "../../public/utils/consts";
 import { Winner, PeerMessage, MoveInfo, TimerSettings, Weapon } from "../@types/types";
-import copyTextToClipboard from "@/public/utils/copyTextToClipboard";
 
 const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: any }) => {
     const forceUpdate = useForceUpdate();
-    const DEFAULT_STAKE = "0.0001";
-    const IMAGES =  [
-        "",
-        "/images/rock.png",
-        "/images/paper.png",
-        "/images/scissors.png",
-        "/images/spock.png",
-        "/images/lizard.png",
-    ];
 
     const [stake, setStake] = useState<string>(DEFAULT_STAKE);
     const [peerId, setPeerId] = useState<String>("");
@@ -99,8 +90,7 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             });
 
             setCreateGameHash(hash);
-            console.log("Successfully set hash");
-            console.log(`Hash: ${hash}`);
+            console.log(`Game Hash: ${hash}`);
         } catch (err) {
             console.log(`Failed to deploy contract: ${err}`);
             console.log("Please ensure to pass the correct Player 2 address (with the leading 0x prefix), and the numeric value of Ether you wish to stake");
@@ -272,11 +262,8 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                 ]);
 
                 const now: number = Math.round(Date.now() / 1000);
-                console.log(`now: ${now}`);
                 const secondsElapsed: number = now - Number(lastAction);
-                console.log(`secondsElapsed: ${secondsElapsed}`);
-                const secondsToTimeout: number = Number(timeout) - secondsElapsed;
-                console.log(`secondsToTimeout: ${secondsToTimeout}`);                
+                const secondsToTimeout: number = Number(timeout) - secondsElapsed;               
                 const newTime: Date = new Date();
 
                 newTime.setSeconds(newTime.getSeconds() + secondsToTimeout);

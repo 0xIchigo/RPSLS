@@ -8,12 +8,14 @@ import { DataConnection } from "peerjs";
 import { useInterval } from "usehooks-ts";
 import { rpsContract } from "../contracts/rpsContract";
 import Timer from "../../public/utils/Timer";
+import useForceUpdate from "../../public/utils/useForceUpdate";
+import initializePeer from "../../public/utils/initializePeer";
+import { IMAGES, DEFAULT_STAKE } from "../../public/utils/consts";
 import { Winner, MoveInfo, TimerSettings, Weapon, PeerMessage } from "../@types/types";
-import initializePeer from "@/public/utils/initializePeer";
 
 
 const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: any, peerId: string | null }) => {
-    const DEFAULT_STAKE = "0.0001";
+    const forceUpdate = useForceUpdate();
     /*
         Since Player 1's move is already hashed and committed, we don't have to worry about making Player
         Two's move hidden. Here, we can use the useState() hook to have the value persist
@@ -74,7 +76,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     props.publicClient.readContract({
                         ...rpsContract,
                         address: contractAddress,
-                        functionName: "c1"
+                        functionName: "_c1"
                     }),
                     props.publicClient.readContract({
                         ...rpsContract,
@@ -84,7 +86,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     props.publicClient.readContract({
                         ...rpsContract,
                         address: contractAddress,
-                        functionName: "c2"
+                        functionName: "_c2"
                     })
                 ]);
     
@@ -130,10 +132,10 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     })
                 ]);
 
-                const now = Math.round(Date.now() / 1000);
-                const secondsElapsed = now - lastAction;
-                const secondsToTimeout = timeout - secondsElapsed;
-                const newTime = new Date();
+                const now: number = Math.round(Date.now() / 1000);
+                const secondsElapsed: number = now - Number(lastAction);
+                const secondsToTimeout: number = Number(timeout) - secondsElapsed;               
+                const newTime: Date = new Date();
 
                 newTime.setSeconds(newTime.getSeconds() + secondsToTimeout);
                 setTimer({
@@ -268,11 +270,9 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
 
     return (
         <>
-            {typeof(props.peerId) === null ? (
+            {typeof(props.peerId) === null && (
                 <div>Error! The peer ID is of type null: {props.peerId}</div>
-            ):
-                <div>Hello!</div>
-            }
+            )}
             {connected && p1Address && (
                 <div>Player Ones address is {p1Address}</div>
             )}
