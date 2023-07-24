@@ -65,7 +65,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
     };
 
     const getBlockchainInfo = async () => {
-        if (contractAddress) {
+        if (contractAddress !== undefined) {
 
             try {
                 // We set the p1Moved to true in the createRPSLSGame function and therefore do not have to check again -
@@ -275,6 +275,9 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             }
             {connected && p1Address && (
                 <div>Player Ones address is {p1Address}</div>
+            )}
+            {contractAddress && (
+                <div>Contract Address: {contractAddress}</div>
             )}
         </>
     )

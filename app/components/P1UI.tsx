@@ -118,70 +118,53 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     } else {
                         setCreateGameReceipt(receipt);
                         console.log(`Contract address: ${receipt.contractAddress}`);
-    
-                        setContractAddress(receipt.contractAddress!);
+                    }
+
+                    /*
+                        We can ignore a lot of TypeScript's warnings as this code will only execute if the
+                        game has been created. For a game to be created: both players must have their wallets
+                        connected, both players will be connected via Peer.js, and createGameReceipt will have
+                        a .contractAddress field
+                    */
+
+                    if (createGameReceipt) {
+                        // Resetting moveInfo for the new game after Player One moves
+                        setMoveInfo({
+                            p1Moved: true,
+                            p2Moved: false,
+                            p2Choice: 0,
+                        });
+                        // If createGameReceipt exists then it must have a contractAddress so we can ignore the warning
+                        //@ts-ignore
+                        setContractAddress(createGameReceipt.contractAddress);
+                        console.log(`Contract address: ${contractAddress}`);
+
+                        await timeSinceLastAction();
+
+                        let peerMessage: PeerMessage = {
+                            _type: "ContractAddress",
+                            address: contractAddress!,
+                        };
+
+                        connected?.send(peerMessage);
+                        
+                        peerMessage = {
+                            _type: "Stake",
+                            stakeAmount: stake,
+                        };
+
+                        connected?.send(peerMessage);
                     }
                 } catch (err) {
                     console.error(err);
-                    // Retry after 5 seconds if an error occurred
+                    // Retry after 5 seconds if an error occurred, such as a load balance sync issue with the RPC
                     setTimeout(fetchReceipt, 5000);
                 }
             }
         };
         fetchReceipt();
-
-        /*
-        (async () => {
-            if (createGameHash) {
-                console.log("Inside if condition for createGameHash")
-                const receipt = await props.publicClient.waitForTransactionReceipt({ hash: createGameHash });
-                console.log("Setting game receipt!");
-
-                setCreateGameReceipt(receipt);
-                console.log("Game receipt set!");
-            }
-        })();
-        */
-    }, [createGameHash, props.publicClient, createGameReceipt])
-
-    /*
-        We can ignore a lot of TypeScript's warnings as this code will only execute if the
-        game has been created. For a game to be created: both players must have their wallets
-        connected, both players will be connected via Peer.js, and createGameReceipt will have
-        a .contractAddress field
-    */
-    useEffect(() => {
-        ;(async () => {
-            if (createGameReceipt) {
-                // Resetting moveInfo for the new game after Player One moves
-                setMoveInfo({
-                    p1Moved: true,
-                    p2Moved: false,
-                    p2Choice: 0,
-                });
-                //@ts-ignore
-                setContractAddress(createGameReceipt.contractAddress);
-                console.log(`Game Address: ${contractAddress}`);
-
-                await timeSinceLastAction();
-
-                let peerMessage: PeerMessage = {
-                    _type: "ContractAddress",
-                    address: contractAddress!,
-                };
-
-                connected?.send(peerMessage);
-
-                peerMessage = {
-                    _type: "Stake",
-                    stakeAmount: stake,
-                };
-
-                connected?.send(peerMessage);
-            }
-        })
         // eslint-disable-next-line
-    }, [createGameReceipt])
+    }, [createGameHash, props.publicClient, createGameReceipt])
 
     useEffect(() => {
         console.log("Trying to reach PeerJS servers...");
@@ -288,10 +271,13 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     })
                 ]);
 
-                const now = Math.round(Date.now() / 1000);
-                const secondsElapsed = now - lastAction;
-                const secondsToTimeout = timeout - secondsElapsed;
-                const newTime = new Date();
+                const now: number = Math.round(Date.now() / 1000);
+                console.log(`now: ${now}`);
+                const secondsElapsed: number = now - Number(lastAction);
+                console.log(`secondsElapsed: ${secondsElapsed}`);
+                const secondsToTimeout: number = Number(timeout) - secondsElapsed;
+                console.log(`secondsToTimeout: ${secondsToTimeout}`);                
+                const newTime: Date = new Date();
 
                 newTime.setSeconds(newTime.getSeconds() + secondsToTimeout);
                 setTimer({
@@ -521,13 +507,15 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         )}
                         {contractAddress !== undefined && (
                             <>
-                                <div>
+                                <div className="flex flex-col items-center justify-center mt-4">
                                     {timerComponent(timer, setTimer)}
                                     {timerExpired(winner, timer, p2Timeout)}
                                 </div>
-                                <a href={`https://sepolia.etherscan.io/address/${contractAddress}`}>
-                                    Match: {contractAddress}
-                                </a>
+                                <div className="mt-4">
+                                    <a href={`https://sepolia.etherscan.io/address/${contractAddress}`}>
+                                        Match: {contractAddress}
+                                    </a>
+                                </div>
                             </>
                         )}
                     </div>

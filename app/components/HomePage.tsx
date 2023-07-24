@@ -165,7 +165,14 @@ export default function HomePage() {
             ) : (
                 <P2UI playerAddress={currentAccount} publicClient={publicClient} walletClient={walletClient} peerId={searchParams.get("peerId") as string} />
             )}
-            {currentAccount && onRightChain && !receipt && (
+        </main>
+    )
+}
+
+// Spock: <span className="font-Icons">v</span>
+
+/*
+{currentAccount && onRightChain && !receipt && (
                 <button onClick={() => createRPSLSGame(1, "0xA26644Bf5797F70243C00a8f713c7979a7295BF2", "0.001")}>
                     Deploy Contract
                 </button>
@@ -184,9 +191,5 @@ export default function HomePage() {
                     </div>
                 </>
             )}
-        </main>
-    )
-}
-
-// Spock: <span className="font-Icons">v</span>
+            */
 
