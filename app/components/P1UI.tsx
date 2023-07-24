@@ -36,7 +36,7 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
     const [createGameReceipt, setCreateGameReceipt] = useState<TransactionReceipt>();
     const [winner, setWinner] = useState<Winner>("Null");
     const [createGameHash, setCreateGameHash] = useState<Hash>();
-    const [contractAddress, setContractAddress] = useState<Hash>();
+    const [contractAddress, setContractAddress] = useState<Address>();
     const [moveInfo, setMoveInfo] = useState<MoveInfo>({
         p1Moved: false,
         p2Moved: false,
@@ -110,41 +110,8 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         console.log(`Contract address: ${receipt.contractAddress}`);
                     }
 
-                    /*
-                        We can ignore a lot of TypeScript's warnings as this code will only execute if the
-                        game has been created. For a game to be created: both players must have their wallets
-                        connected, both players will be connected via Peer.js, and createGameReceipt will have
-                        a .contractAddress field
-                    */
-
-                    if (createGameReceipt) {
-                        // Resetting moveInfo for the new game after Player One moves
-                        setMoveInfo({
-                            p1Moved: true,
-                            p2Moved: false,
-                            p2Choice: 0,
-                        });
-                        // If createGameReceipt exists then it must have a contractAddress so we can ignore the warning
-                        //@ts-ignore
-                        setContractAddress(createGameReceipt.contractAddress);
-                        console.log(`Contract address: ${contractAddress}`);
-
-                        await timeSinceLastAction();
-
-                        let peerMessage: PeerMessage = {
-                            _type: "ContractAddress",
-                            address: contractAddress!,
-                        };
-
-                        connected?.send(peerMessage);
-                        
-                        peerMessage = {
-                            _type: "Stake",
-                            stakeAmount: stake,
-                        };
-
-                        connected?.send(peerMessage);
-                    }
+                    forceUpdate();
+                    await getBlockchainInfo();
                 } catch (err) {
                     console.error(err);
                     // Retry after 5 seconds if an error occurred, such as a load balance sync issue with the RPC
@@ -154,7 +121,43 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         };
         fetchReceipt();
         // eslint-disable-next-line
-    }, [createGameHash, props.publicClient, createGameReceipt])
+    }, [createGameHash, props.publicClient]);
+
+    useEffect(() => {
+        /*
+            We can ignore a lot of TypeScript's warnings as this code will only execute if the
+            game has been created. For a game to be created: both players must have their wallets
+            connected, both players will be connected via Peer.js, and createGameReceipt will have
+            a .contractAddress field
+        */
+        
+        ;(async () => {
+            if(createGameReceipt) {
+                // Resetting moveInfo for the new game after Player One moves
+                setMoveInfo({
+                    p1Moved: true,
+                    p2Moved: false,
+                    p2Choice: 0,
+                });
+
+                // If createGameReceipt exists then it must have a contractAddress so we can ignore TypeScript's warning
+                //@ts-ignore
+                setContractAddress(createGameReceipt.contractAddress);
+                console.log(`Set the contract address to ${contractAddress}`);
+
+                await timeSinceLastAction();
+                console.log("After timeSinceLastAction call");
+
+                let peerMessage: PeerMessage = {
+                    _type: "ContractAddress",
+                    address: contractAddress!,
+                };
+                console.log("Sending peer message...");
+                connected?.send(peerMessage);
+            }
+        })()
+        // eslint-disable-next-line
+    }, [createGameReceipt, contractAddress]);
 
     useEffect(() => {
         console.log("Trying to reach PeerJS servers...");
@@ -196,6 +199,8 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
 
                         setTimer({ ...timer, expired: false, status: "Null" });
                         return setP2Address(data.address as string);
+                    } else if (data._type === "Player2Responded") {
+                        getBlockchainInfo();
                     } else {
                         return;
                     }
@@ -204,7 +209,8 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         };
 
         createPeer();
-    }, [props.playerAddress, timer]);
+        // eslint-disable-next-line
+    }, [props.playerAddress]);
 
     const getBlockchainInfo = async () => {
         if (contractAddress) {
@@ -233,11 +239,6 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         }
     }
 
-    // Every 10 seconds we check the chain to see if P2 moved
-    useInterval(async () => {
-        if (contractAddress) getBlockchainInfo(); 
-    }, 10000);
-
     useEffect(() => {
         if (moveInfo.p2Moved && !timer.expired) {
             setTimer({ ...timer, status: "Null", expired: false });
@@ -245,9 +246,21 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         }
     }, [moveInfo, timer]);
 
+    useEffect(() => {
+        console.log("Checking winner...");
+        checkWinner();
+        console.log("Winner has been decided!");
+        // eslint-disable-next-line
+    }, [p2Response]);
+
     const timeSinceLastAction = async () => {
-        if (contractAddress) {
+        if (contractAddress !== undefined) {
+            console.log("In timeSinceLastAction");
             try {
+
+                getBlockchainInfo();
+                console.log("Got blockchain info");
+
                 const [lastAction, timeout] = await Promise.all([
                     props.publicClient.readContract({
                         ...rpsContract,
@@ -261,10 +274,13 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     })
                 ]);
 
+                console.log("Read contract vars");
+
                 const now: number = Math.round(Date.now() / 1000);
                 const secondsElapsed: number = now - Number(lastAction);
                 const secondsToTimeout: number = Number(timeout) - secondsElapsed;               
                 const newTime: Date = new Date();
+                console.log("Done calculations");
 
                 newTime.setSeconds(newTime.getSeconds() + secondsToTimeout);
                 setTimer({
@@ -274,6 +290,8 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     reset: true,
                     
                 })
+
+                console.log("Done calculations and set timer");
             } catch (err) {
                 console.log(`Error retrieving time since last action: ${err}`);
             }
@@ -434,7 +452,7 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     <div>We can<span>&#39;</span>t start the game without their address!</div>
                 </div>
             )}
-            {connected && p2Address !== "" && (
+            {connected && p2Address !== "" && winner === "Null" && (
                 <div>
                     <div className="flex flex-col justify-center items-center mt-4">
                         <div className="">
@@ -507,6 +525,24 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         )}
                     </div>
                 </div>
+            )}
+            {winner === "Player1" ? (
+                <>
+                    <div>Congrats, you won!</div>
+                    <div>Your winnings of {Number(stake) * 2} ETH will be sent over! Check your wallet momentarily</div>
+                </>
+            ) : winner === "Player2" ? (
+                <>
+                    <div>You lost!</div>
+                    <div>Your wager of {stake} ETH has been sent to {p2Address}</div>
+                </>
+            ) : winner === "Draw" ? (
+                <>
+                    <div>It is a draw!</div>
+                    <div>Your stake of {stake} ETH will be sent over; check your wallet momentarily</div>
+                </>
+            ) : (
+                <span></span>
             )}
         </div>
     )

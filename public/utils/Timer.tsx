@@ -32,6 +32,7 @@ const Timer = ({
 
     useEffect(() => {
         console.log(`Running: ${isRunning}, ${seconds}, ${timerState.timer}`);
+        // eslint-disable-next-line
     }, [isRunning]);
 
     useEffect(() => {
@@ -40,6 +41,7 @@ const Timer = ({
             timerState.setTimer({ ...timerState.timer, reset: false });
             restart(timerState.timer.time, true);
         }
+        // eslint-disable-next-line
     }, [timerState.timer.reset]);
 
     return (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
+import Image from "next/Image";
 import { 
-    Hash, 
     Address, 
     parseEther 
 } from "viem";
@@ -8,25 +8,24 @@ import { DataConnection } from "peerjs";
 import { useInterval } from "usehooks-ts";
 import { rpsContract } from "../contracts/rpsContract";
 import Timer from "../../public/utils/Timer";
-import useForceUpdate from "../../public/utils/useForceUpdate";
 import initializePeer from "../../public/utils/initializePeer";
 import { IMAGES, DEFAULT_STAKE } from "../../public/utils/consts";
 import { Winner, MoveInfo, TimerSettings, Weapon, PeerMessage } from "../@types/types";
 
 
 const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: any, peerId: string | null }) => {
-    const forceUpdate = useForceUpdate();
     /*
         Since Player 1's move is already hashed and committed, we don't have to worry about making Player
         Two's move hidden. Here, we can use the useState() hook to have the value persist
     */
-    const [choice, setChoice] = useState<Number>(0);
+    const [choice, setChoice] = useState<Weapon>(0);
     const [requiredStake, setRequiredStake] = useState<string>(DEFAULT_STAKE);
-    const [contractAddress, setContractAddress] = useState<string>();
+    const [contractAddress, setContractAddress] = useState<Address>();
     const [connected, setConnected] = useState<DataConnection>();
-    const [winner, setWinner] = useState<Winner>();
+    const [winner, setWinner] = useState<Winner>("Null");
     const [p1Address, setP1Address] = useState<string>("");
     const [p1Choice, setP1Choice] = useState<Number>();
+    const [responseSent, setResponseSent] = useState<Boolean>(false);
     const [moveInfo, setMoveInfo] = useState<MoveInfo>({
         p1Moved: false,
         p2Moved: false,
@@ -41,15 +40,15 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
     });
 
     const sendP2Choice = async (
-        choice: number,
     ) => {
+        if (contractAddress === undefined) return;
         try {
             const { request } = await props.publicClient.simulateContract({
                 ...rpsContract,
                 account: props.playerAddress as Address,
                 address: contractAddress,
                 functionName: "play",
-                args: [choice],
+                args: [choice && Number(choice + 1)],
                 value: parseEther(requiredStake)
             });
 
@@ -58,8 +57,17 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
 
             if (receipt.status !== "success") throw Error(`Transaction failed: ${receipt}`);
 
-            setChoice(choice);
-            timeSinceLastAction();
+            setResponseSent(true);
+
+            let peerMessage: PeerMessage = {
+                "_type": "Player2Responded"
+            };
+
+            console.log("Sent response to Player One");
+
+            connected?.send(peerMessage);
+
+            await timeSinceLastAction();
         } catch (err) {
             console.log(`Error sending choice: ${err}`);
             console.log("Please remember to stake the correct Ether value");
@@ -70,13 +78,15 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         if (contractAddress !== undefined) {
 
             try {
+                await timeSinceLastAction();
+                
                 // We set the p1Moved to true in the createRPSLSGame function and therefore do not have to check again -
                 // the contract will not deploy without the hash
                 const [p1MoveHash, stake, p2Move] = await Promise.all([
                     props.publicClient.readContract({
                         ...rpsContract,
                         address: contractAddress,
-                        functionName: "_c1"
+                        functionName: "c1Hash"
                     }),
                     props.publicClient.readContract({
                         ...rpsContract,
@@ -86,7 +96,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     props.publicClient.readContract({
                         ...rpsContract,
                         address: contractAddress,
-                        functionName: "_c2"
+                        functionName: "c2"
                     })
                 ]);
     
@@ -112,9 +122,12 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         }
     }
     
+    // Don't think this is necessary since we have the p2p connection ?
+    /*
     useInterval(async () => {
         if (contractAddress) getBlockchainInfo();
     }, 15000);
+    */
 
     const timeSinceLastAction = async () => {
         if (contractAddress) {
@@ -128,7 +141,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     props.publicClient.readContract({
                         ...rpsContract,
                         address: contractAddress,
-                        functionName: "",
+                        functionName: "TIMEOUT",
                     })
                 ]);
 
@@ -253,7 +266,8 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         console.log(`Player1's address: ${data.address}`);
                         return setP1Address(data.address);
                     } else if (data._type === "ContractAddress") {
-                        return setContractAddress(data.address);
+                        getBlockchainInfo();
+                        return setContractAddress(data.address as Address);
                     } else if (data._type === "Player1Choice") {
                         return setP1Choice(data.choice);
                     } else if (data._type === "Winner") {
@@ -265,7 +279,8 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                 });
             });
         })()
-    }, [props.peerId, props.playerAddress, timer]);
+        // eslint-disable-next-line
+    }, [props.peerId, props.playerAddress]);
 
 
     return (
@@ -273,11 +288,71 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             {typeof(props.peerId) === null && (
                 <div>Error! The peer ID is of type null: {props.peerId}</div>
             )}
-            {connected && p1Address && (
-                <div>Player Ones address is {p1Address}</div>
+            {connected && p1Address !== "" && (
+                <div>
+                    <div className="flex flex-col justify-center items-center mt-4">
+                        <div className="">
+                            Connected with Player One!
+                        </div>
+                        <div>
+                            Your opponent: <a target="_blank" href={`https://sepolia.etherscan.io/address/${p1Address}`}>{p1Address}</a>
+                        </div>
+
+                        {contractAddress !== undefined && (
+                            <>
+                                <div className="flex flex-row mt-10">
+                                    {IMAGES.map((image, index) => {
+                                        if (index === 0) return;
+                                        return (
+                                            <div
+                                                key={index}
+                                                onClick={() => {
+                                                    setChoice(index)
+                                                }}
+                                            >
+                                                <Image
+                                                    src={image}
+                                                    alt=""
+                                                    width={250}
+                                                    height={250}
+                                                />
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                                <div className="flex flex-row justify-between items-center mt-4">
+                                    <div className="mr-2">
+                                        Ether to stake: {requiredStake}
+                                    </div>
+                                </div>
+                                {Weapon[choice] !== "Null" && (
+                                    <div>
+                                        You have selected: {Weapon[choice]}
+                                    </div>
+                                )}
+                                <button
+                                    className="mt-4"
+                                    onClick={() => sendP2Choice()}
+                                >
+                                    Send Response
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
             )}
-            {contractAddress && (
-                <div>Contract Address: {contractAddress}</div>
+            {contractAddress !== undefined && responseSent && (
+                <>
+                    <div className="flex flex-col items-center justify-center mt-4">
+                        {timerComponent(timer, setTimer)}
+                        {timerExpired(winner, timer, p1Timeout)}
+                    </div>
+                    <div className="mt-4">
+                        <a href={`https://sepolia.etherscan.io/address/${contractAddress}`}>
+                            Match: {contractAddress}
+                        </a>
+                    </div>
+                </>
             )}
         </>
     )

@@ -15,8 +15,8 @@ export type PeerMessage =
     { _type: "ContractAddress"; address: string } |
     { _type: "Winner"; player: Winner } |
     { _type: "Player1Choice"; choice: Number } |
-    { _type: "Connected"} |
-    { _type: "Stake"; stakeAmount: string };
+    { _type: "Player2Responded"} |
+    { _type: "Connected"};
 
 export type MoveInfo = {
     p1Moved: Boolean,
