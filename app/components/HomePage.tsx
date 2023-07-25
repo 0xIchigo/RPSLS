@@ -1,45 +1,67 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { 
     createPublicClient,
     createWalletClient, 
     custom,
-    http,
-    Hash,
-    Address,
-    Hex,
-    TransactionReceipt,
-    stringify,
-    encodePacked,
-    keccak256, 
-    parseEther,
     webSocket
 } from "viem";
 import { sepolia } from "viem/chains";
 import "viem/window";
-import { rpsContract } from "../contracts/rpsContract";
-import getRandomVal from "../../public/utils/getRandomVal";
+import { AiOutlineClose } from "react-icons/ai";
+import  P1UI  from "./P1UI";
+import  P2UI from "./P2UI";
 
 import dotenv from "dotenv";
 dotenv.config();
-
-import  P1UI  from "./P1UI";
-import  P2UI from "./P2UI"
 
 const SEPOLIA_ID = "0xaa36a7";
 const transport = webSocket(process.env.REACT_APP_SEPOLIA as string);
 
 export default function HomePage() {
     const [currentAccount, setCurrentAccount] = useState<string>("");
-    const [hash, setHash] = useState<Hash>();
-    const [receipt, setReceipt] = useState<TransactionReceipt>();
     const [onRightChain, setOnRightChain] = useState<Boolean>(false);
-
-    let saltRef = useRef<String | undefined>();
+    const [toggleRulesPopup, setToggleRulesPopup] = useState<Boolean>(false);
 
     const searchParams = useSearchParams();
+
+    const RulesPopup = () => {
+        
+        const handleClose = () => setToggleRulesPopup(false);
+
+        return (
+            <div className="fixed top-0 left-0 z-999 w-screen h-screen bg-black bg-opacity-75 flex items-center justify-content">
+                <div className=" max-h-1/2-screen w-120 rounded bg-white px-4 py-2 text-black absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 overflow-y-scroll"> 
+                    <div className="flex flex-row-reverse text-center mt-2 mb-2 cursor-pointer hover:text-green" onClick={handleClose}>
+                        <AiOutlineClose />
+                    </div>
+                    <div className="text-xl font-semibold mb-4">
+                        How to Play
+                    </div>
+                    <div className="pl-2 mb-4">
+                        To play RPSLS each player must pick either Rock, Paper, Scissors, Lizard, or Spock and reveal it at the same time as the other player. A winning hand is determined as follows:
+                    </div>
+                    <ul className="pl-8 list-disc list-inside mb-4">
+                        <li>Scissors cuts Paper</li>
+                        <li>Paper covers Rock</li>
+                        <li>Rock crushes Lizard</li>
+                        <li>Lizard poisons Spock</li>
+                        <li>Spock smashes Scissors</li>
+                        <li>Scissors decapitates Lizard</li>
+                        <li>Lizard eats paper</li>
+                        <li>Paper disproves Spock</li>
+                        <li>Spock vaporizes Rock</li>
+                        <li>Rock crushes scissors</li>
+                    </ul>
+                    <div className="pl-2 mb-4">
+                        To play RPSLS using this app, the first player creates the game, putting a commitment of their move, staking some Ether, and selects the other player who they wish to play against. The second player stakes the same amount of Ether as the first player and picks their move. Then, the first party reveals their move and the contract distributes the Ether to the winner based on the winning combination, or splits the Ether in the case of a tie. If a party stops responding then there is a timeout.
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     const publicClient = createPublicClient({
         chain: sepolia,
@@ -54,41 +76,6 @@ export default function HomePage() {
     const handleConnect = async () => {
         const [address] = await walletClient.requestAddresses();
         setCurrentAccount(address);
-    }
-
-    saltRef.current = "testing";
-
-    const createRPSLSGame = async (
-        choice: number,
-        p2Address: string,
-        stake: string,
-    ) => {
-        if (!currentAccount) return;
-        
-        const account: Address = currentAccount as Address;
-        const salt = getRandomVal();
-        const p1Hash: Hex = keccak256(encodePacked(["uint8", "uint256"], [choice, salt])) as Hex;
-
-        try {
-            // @ts-ignore
-            const hash = await walletClient.deployContract({
-                ...rpsContract,
-                account,
-                /*
-                    The user is passing in the address with the 0x hex prefix but TS doesn't like us putting in
-                    just the string value as it expects type `0x${string}`
-                    When you copy an address from MM it includes the prefix so it is reasonable to assume the
-                    user will also include it here
-                */
-                
-                args: [p1Hash, p2Address as Address],
-                value: parseEther(stake),
-            });
-            setHash(hash);
-        } catch {
-            console.log("Failed to deploy contract - invalid data provided!");
-            console.log("Please ensure to pass the correct Player 2 address (with the leading 0x prefix), and the numeric value of Ether you wish to stake");
-        }
     }
 
     const checkWalletConnected = async () => {
@@ -116,15 +103,6 @@ export default function HomePage() {
     }
 
     useEffect(() => {
-        ;(async () => {
-            if (hash) {
-                const receipt = await publicClient.waitForTransactionReceipt({ hash })
-                setReceipt(receipt);
-            }
-        })()
-    }, [hash, publicClient]);
-
-    useEffect(() => {
         checkWalletConnected();
     }, []);
 
@@ -132,16 +110,20 @@ export default function HomePage() {
     return (
         <main className="flex flex-col justify-center items-center p-4 max-w-5xl mx-auto">
             <nav className="min-w-full px-4 py-1 top-0 z-10 text-white">
-            <div className="max-w-5xl mx-auto px-4 mb-10">
-                <div className="flex flex-row-reverse items-center h-16">
-                    { currentAccount 
-                    ?   <button className="rounded-lg border-white border-2 px-4 py-2 hover:text-green">
-                            Connected: {currentAccount}
-                        </button> 
-                    :   <button onClick={handleConnect} className="rounded-lg border-white border-2 px-4 py-2 hover:text-green">
-                            Connect Wallet
-                        </button>}
-                </div>
+                <div className="max-w-5xl mx-auto px-4 mb-10">
+                    <div className="flex flex-row-reverse justify-between items-center h-16">
+                        { currentAccount 
+                        ?   <button className="rounded-lg border-white border-2 px-4 py-2 hover:text-green">
+                                Connected: {currentAccount}
+                            </button> 
+                        :   <button onClick={handleConnect} className="rounded-lg border-white border-2 px-4 py-2 hover:text-green">
+                                Connect Wallet
+                            </button>
+                        }
+                        <div className="cursor-pointer hover:text-green" onClick={() => setToggleRulesPopup(true)}>
+                            Rules
+                        </div>
+                    </div>
                 </div>
             </nav>
             <div className="flex flex-row justify-center items-center text-5xl">
@@ -165,31 +147,11 @@ export default function HomePage() {
             ) : (
                 <P2UI playerAddress={currentAccount} publicClient={publicClient} walletClient={walletClient} peerId={searchParams.get("peerId") as string} />
             )}
+            {toggleRulesPopup && (
+                <RulesPopup />
+            )}
         </main>
     )
 }
 
 // Spock: <span className="font-Icons">v</span>
-
-/*
-{currentAccount && onRightChain && !receipt && (
-                <button onClick={() => createRPSLSGame(1, "0xA26644Bf5797F70243C00a8f713c7979a7295BF2", "0.001")}>
-                    Deploy Contract
-                </button>
-            )}
-            {receipt && (
-                <>
-                    <div>
-                        Contract address: {receipt.contractAddress}
-                        {typeof(receipt.contractAddress)}
-                    </div>
-                    <div>
-                        Receipt:{' '}
-                        <pre>
-                            <code>{stringify(receipt, null, 2)}</code>
-                        </pre>
-                    </div>
-                </>
-            )}
-            */
-
