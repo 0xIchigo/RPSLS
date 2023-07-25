@@ -132,7 +132,7 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         */
         
         (async () => {
-            if(createGameReceipt) {
+            if(createGameReceipt && winner === "Null") {
                 // Resetting moveInfo for the new game after Player One moves
                 setMoveInfo({
                     p1Moved: true,
@@ -169,9 +169,7 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
     }, [createGameReceipt, contractAddress, createGameHash]);
 
     useInterval(async () => {
-        if (contractAddress) {
-            getBlockchainInfo();
-        }
+        if (contractAddress && winner === "Null") getBlockchainInfo();
     }, 15000);
 
     useEffect(() => {
@@ -462,7 +460,7 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
     }
 
     return (
-        <div>
+        <div className="flex flex-col items-center justify-center mt-4">
             {!connected && props.playerAddress !== "" && (
                 <div className="flex flex-col justify-center items-center mt-4">
                     <div>Waiting on Player 2 to connect...</div>
@@ -556,16 +554,19 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             {winner === "Player1" ? (
                 <>
                     <div>Congrats, you won!</div>
+                    <div>You picked {Weapon[moveRef.current as number ?? 0]} while your opponent picked {Weapon[Number(moveInfo.p2Choice ?? 0)]}</div>
                     <div>Your winnings of {Number(stake) * 2} ETH will be sent over! Check your wallet momentarily</div>
                 </>
             ) : winner === "Player2" ? (
                 <>
                     <div>You lost!</div>
+                    <div>You picked {Weapon[moveRef.current ?? 0]} while your opponnent picked {Weapon[Number(moveInfo.p2Choice ?? 0)]}</div>
                     <div>Your wager of {stake} ETH has been sent to {p2Address}</div>
                 </>
             ) : winner === "Draw" ? (
                 <>
                     <div>It is a draw!</div>
+                    <div>You both picked {Weapon[moveRef.current ?? 0]}!</div>
                     <div>Your stake of {stake} ETH will be sent over; check your wallet momentarily</div>
                 </>
             ) : (

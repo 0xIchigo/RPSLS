@@ -123,7 +123,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
     }
     
     useInterval(async () => {
-        if (contractAddress) getBlockchainInfo();
+        if (contractAddress && winner === "Null") getBlockchainInfo();
     }, 15000);
 
     const timeSinceLastAction = async () => {
@@ -287,10 +287,10 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
     return (
         <>
             {typeof(props.peerId) === null && (
-                <div>Error! The peer ID is of type null: {props.peerId}</div>
+               <div className="flex flex-col items-center justify-center mt-4">Error! The peer ID is of type null: {props.peerId}</div>
             )}
-            {connected && p1Address !== "" && (
-                <div>
+            {connected && p1Address !== "" && winner === "Null" && (
+                <div className="flex flex-col items-center justify-center mt-4">
                     <div className="flex flex-col justify-center items-center mt-4">
                         <div className="">
                             Connected with Player One!
@@ -342,7 +342,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     </div>
                 </div>
             )}
-            {contractAddress !== undefined && responseSent && (
+            {contractAddress !== undefined && responseSent && winner === "Null" && (
                 <>
                     <div className="flex flex-col items-center justify-center mt-4">
                         {timerComponent(timer, setTimer)}
@@ -354,6 +354,27 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         </a>
                     </div>
                 </>
+            )}
+            {winner === "Player2" ? (
+                <>
+                    <div>Congrats, you won!</div>
+                    <div>You picked {Weapon[choice ?? 0]} while your opponnent picked {Weapon[Number(p1Choice ?? 0)]}</div>
+                    <div>Your winnings of {Number(requiredStake) * 2} ETH will be sent over! Check your wallet momentarily</div>
+                </>
+            ) : winner === "Player1" ? (
+                <>
+                    <div>You lost!</div>
+                    <div>You picked {Weapon[choice ?? 0]} while your opponnent picked {Weapon[Number(p1Choice ?? 0)]}</div>
+                    <div>Your wager of {requiredStake} ETH has been sent to {p1Address}</div>
+                </>
+            ) : winner === "Draw" ? (
+                <>
+                    <div>It is a draw!</div>
+                    <div>You both picked {Weapon[choice ?? 0]}!</div>
+                    <div>Your stake of {requiredStake} ETH will be sent over; check your wallet momentarily</div>
+                </>
+            ) : (
+                <span></span>
             )}
         </>
     )
