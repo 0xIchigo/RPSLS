@@ -16,6 +16,7 @@ export type PeerMessage =
     { _type: "Winner"; player: Winner } |
     { _type: "Player1Choice"; choice: Number } |
     { _type: "Player2Responded"} |
+    { _type: "requiredStake"; amountStaked: string } |
     { _type: "Connected"};
 
 export type MoveInfo = {

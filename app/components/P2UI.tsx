@@ -48,7 +48,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                 account: props.playerAddress as Address,
                 address: contractAddress,
                 functionName: "play",
-                args: [choice && Number(choice + 1)],
+                args: [Number(choice)],
                 value: parseEther(requiredStake)
             });
 
@@ -60,7 +60,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             setResponseSent(true);
 
             let peerMessage: PeerMessage = {
-                "_type": "Player2Responded"
+                _type: "Player2Responded"
             };
 
             console.log("Sent response to Player One");
@@ -106,7 +106,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         p1Moved: true,
                         stake: stake,
                     });
-                    setRequiredStake(stake);
+                    //setRequiredStake(stake as unknown as string);
                 }
 
                 if (p2Move) {
@@ -122,12 +122,9 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         }
     }
     
-    // Don't think this is necessary since we have the p2p connection ?
-    /*
     useInterval(async () => {
         if (contractAddress) getBlockchainInfo();
     }, 15000);
-    */
 
     const timeSinceLastAction = async () => {
         if (contractAddress) {
@@ -273,6 +270,10 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     } else if (data._type === "Winner") {
                         setTimer({ ...timer, status: "Null", reset: true });
                         return setWinner(data.player)
+                    } else if (data._type === "requiredStake") {
+                        console.log(`amountStaked: ${data.amountStaked}`);
+                        console.log(`Type: ${typeof(data.amountStaked)}`);
+                        return setRequiredStake(data.amountStaked);
                     } else {
                         return;
                     }
