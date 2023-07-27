@@ -21,7 +21,9 @@ To play RPSLS each player must pick either Rock, Paper, Scissors, Lizard, or Spo
 - Spock vaporizes Rock
 - Rock crushes scissors
 
-To play RPSLS using this app, the first player creates the game, putting a commitment of their move, staking some Ether, and selects the other player who they wish to play against. The second player stakes the same amount of Ether as the first player and picks their move. Then, the first party reveals their move and the contract distributes the Ether to the winner based on the winning combination, or splits the Ether in the case of a tie. If a party stops responding then there is a timeout.
+To play RPSLS using this app, Player One creates the game, commitmenting their move as a hash, staking some Ether, and inputs the address of the player they wish to play against. Player Two stakes the same amount of Ether as the Player One and submits their move. Then, Player One reveals their move and the contract distributes the Ether to the winner based on the winning combination, or splits the Ether in the case of a tie.
+
+If a party does not respond for more than 5 minutes then there is a timeout. If Player Two times out then Player One is able to retrieve their own stake. If, however, Player One times out, Player Two receives both of their stakes as Player One can only time out after a game has been created.
 
 ## Mixed Strategy Nash Equilibria
 
