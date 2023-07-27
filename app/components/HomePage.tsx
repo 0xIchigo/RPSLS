@@ -33,12 +33,12 @@ export default function HomePage() {
 
         return (
             <div className="fixed top-0 left-0 z-999 w-screen h-screen bg-black bg-opacity-75 flex items-center justify-content">
-                <div className=" max-h-1/2-screen w-120 rounded bg-white px-4 py-2 text-black absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 overflow-y-scroll"> 
-                    <div className="flex flex-row-reverse text-center mt-2 mb-2 cursor-pointer hover:text-green" onClick={handleClose}>
+                <div className=" max-h-1/2-screen w-120 rounded bg-black px-4 py-2 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 overflow-y-scroll border-white border-2"> 
+                    <div className="flex flex-row-reverse text-center mt-1 mb-2 cursor-pointer hover:text-green" onClick={handleClose}>
                         <AiOutlineClose />
                     </div>
-                    <div className="text-xl font-semibold mb-4">
-                        How to Play
+                    <div className="text-xl font-semibold font-FinalFrontier mb-4">
+                        Rules
                     </div>
                     <div className="pl-2 mb-4">
                         To play RPSLS each player must pick either Rock, Paper, Scissors, Lizard, or Spock and reveal it at the same time as the other player. A winning hand is determined as follows:
@@ -106,6 +106,10 @@ export default function HomePage() {
         checkWalletConnected();
     }, []);
 
+    const shortenAddress = (chars = 4): string => {
+        return `${currentAccount.slice(0, chars + 2)}...${currentAccount.slice(-chars)}`;
+    }
+
 
     return (
         <main className="flex flex-col justify-center items-center p-4 max-w-5xl mx-auto">
@@ -114,13 +118,13 @@ export default function HomePage() {
                     <div className="flex flex-row-reverse justify-between items-center h-16">
                         { currentAccount 
                         ?   <button className="rounded-lg border-white border-2 px-4 py-2 hover:text-green">
-                                Connected: {currentAccount}
+                                Connected: {shortenAddress()}
                             </button> 
                         :   <button onClick={handleConnect} className="rounded-lg border-white border-2 px-4 py-2 hover:text-green">
                                 Connect Wallet
                             </button>
                         }
-                        <div className="cursor-pointer hover:text-green" onClick={() => setToggleRulesPopup(true)}>
+                        <div className="font-FinalFrontier cursor-pointer hover:text-green text-lg" onClick={() => setToggleRulesPopup(true)}>
                             Rules
                         </div>
                     </div>
@@ -128,7 +132,7 @@ export default function HomePage() {
             </nav>
             <div className="flex flex-row justify-center items-center text-5xl">
                 <h1 className="font-FinalFrontier">
-                    Rock, Paper, Scissors, Lizard, Spock
+                    RPSLS
                 </h1>
             </div>
             {(currentAccount == "") && (

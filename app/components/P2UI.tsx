@@ -218,7 +218,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         Player 1 has timed out!
                     </div>
                     <button onClick={async () => p1Timeout()}>
-                        Click here to get both stakes
+                        Click <span className="text-green hover:underline">here</span> to get both stakes
                     </button>
                 </div>
             )
@@ -344,8 +344,8 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             )}
             {contractAddress !== undefined && responseSent && winner === "Null" && (
                 <>
-                    <div className="flex flex-col items-center justify-center mt-4">
-                        {timerComponent(timer, setTimer)}
+                    <div className="flex flex-col items-center justify-center text-center mt-4">
+                        {!timer.expired ?? timerComponent(timer, setTimer)}
                         {timerExpired(winner, timer, p1Timeout)}
                     </div>
                     <div className="mt-4">
@@ -356,23 +356,23 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                 </>
             )}
             {winner === "Player2" ? (
-                <>
+                <div className="flex flex-col items-center justify-center mt-8">
                     <div>Congrats, you won!</div>
-                    <div>You picked {Weapon[choice ?? 0]} while your opponnent picked {Weapon[Number(p1Choice ?? 0)]}</div>
+                    <div>You picked {Weapon[choice ?? 0]} while your opponnent picked {p1Choice as Weapon}</div>
                     <div>Your winnings of {Number(requiredStake) * 2} ETH will be sent over! Check your wallet momentarily</div>
-                </>
+                </div>
             ) : winner === "Player1" ? (
-                <>
+                <div className="flex flex-col items-center justify-center mt-8">
                     <div>You lost!</div>
-                    <div>You picked {Weapon[choice ?? 0]} while your opponnent picked {Weapon[Number(p1Choice ?? 0)]}</div>
+                    <div>You picked {Weapon[choice ?? 0]} while your opponnent picked {p1Choice as Weapon}</div>
                     <div>Your wager of {requiredStake} ETH has been sent to {p1Address}</div>
-                </>
+                </div>
             ) : winner === "Draw" ? (
-                <>
+                <div className="flex flex-col items-center justify-center mt-8">
                     <div>It is a draw!</div>
                     <div>You both picked {Weapon[choice ?? 0]}!</div>
-                    <div>Your stake of {requiredStake} ETH will be sent over; check your wallet momentarily</div>
-                </>
+                    <div>Your stake of {requiredStake} ETH will be returned momentarily</div>
+                </div>
             ) : (
                 <span></span>
             )}

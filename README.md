@@ -63,7 +63,7 @@ For the peer-to-peer programming, Peerjs was an obvious choice given it abstract
 
 ### RPS.sol
 
-The most logical design choice for this dApp without modifying [rps.sol](https://github.com/0xIchigo/rpsls/blob/main/app/contracts/rps.sol) was to create a contract factory. This is because the smart contract itself is not suitable for more than one game session, which is troublesome if players wanted to play more than one game.
+The most logical design choice for this dApp without modifying [rps.sol](https://github.com/0xIchigo/rpsls/blob/main/app/contracts/rps.sol) was to create a contract factory. This is because the smart contract itself is not suitable for more than one game session, which is troublesome if players wanted to play more than one game. To create the smart contract factory, I saved and exported the contract's ABI and Bytecode as a `constant` so I could use it quite easily with viem's `deployContract()` function.
 
 If I were to improve upon this project, the first thing I would do is rewrite RPS.sol using the latest version of Solidity, which, at the time of writing this, is v0.8.21. This would allow for a number of improvements to the smart contract, namely: custom errors, and the `constructor()` function (as opposed to naming the constructor after the contract's name).
 
@@ -82,7 +82,7 @@ The issue here is that the stake is sent out _before_ it is set to zero. If J2 i
 
 The contract also fails to follow the Withdrawl Pattern. The Withdrawl Pattern places the responsibility for claiming funds on the recipient of the funds - they have to send a transaction to withdraw these funds. By forcefully sending Ether to an address by using the `.send()` function without any checks for its return value, the smart contract can run into a number of issues: how does the smart contract know whether funds failed to send due to an actual error, or whether the recipient is a malicious smart contract that is deliberately refusing to accept funds? Say Player One is a wealthy user that could afford to lose a value of 1 ETH playing this game while Player Two is not. Player One could deliberately refuse Ether, DOSing the game. This becomes an issue in the `solve()` function when the two users tie and the stakes are sent back. Player One's stake is sent first so if they deliberately refuse the Ether then Player Two's stake is lost.
 
-Other minor changes I would make include adding and emitting events, as well as completely removing the `Hasher` contract as it is dead code for aforementioned security reasons.
+Other minor changes I would make include: adding and emitting events, adding a Winner variable so the winner can be retrieved from the contract instead of having to determine the winner locally, as well as completely removing the `Hasher` contract as it is dead code for aforementioned security reasons.
 
 # Acknowledgements
 

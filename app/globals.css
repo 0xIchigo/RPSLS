@@ -28,5 +28,5 @@ body {
 }
 
 a {
-  @apply hover:text-green
+  @apply hover:text-green;
 }
