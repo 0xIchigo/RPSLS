@@ -391,11 +391,12 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         if (_c1 === _c2) {
             return "Draw";
         } else if (_c1 % 2 == _c2 % 2) {
-            return _c1 < _c2;
-        } else {
             return _c1 > _c2;
+        } else {
+            return _c1 < _c2;
         }
     }
+
 
     const decideWinner = (): Winner => {
         if (!moveRef.current || !p2Response) return "Null";
@@ -558,20 +559,20 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                 </div>
             )}
             {winner === "Player1" ? (
-                <div className="flex flex-col items-center justify-center mt-8">
+                <div className="flex flex-col items-center justify-center mt-4">
                     <div>Congrats, you won!</div>
-                    <div>You picked {Weapon[moveRef.current as number ?? 0]} while your opponent picked {Weapon[p2Response as number]}</div>
+                    <div>You picked {moveRef.current} while your opponent picked {Weapon[p2Response as number]}</div>
                     <div>Your winnings of {Number(stake) * 2} ETH will be sent over! Check your wallet momentarily</div>
                 </div>
             ) : winner === "Player2" ? (
-                <div className="flex flex-col items-center justify-center mt-8">
+                <div className="flex flex-col items-center justify-center mt-4">
                     <div>You lost!</div>
                     <div>You picked {moveRef.current} while your opponnent picked {Weapon[p2Response as number]}</div>
-                    <div>Your wager of {stake} ETH has been sent to {p2Address}</div>
+                    <div>Your wager of {stake} ETH has been sent to <a target="_blank" href={`https://sepolia.etherscan.io/address/${p2Address}`}>{p2Address}</a></div>
                 </div>
             ) : winner === "Draw" ? (
-                <div className="flex flex-col items-center justify-center mt-8">
-                    <div>It is a draw!</div>
+                <div className="flex flex-col items-center justify-center mt-4">
+                    <div>It<span>&#39;</span>s a draw!</div>
                     <div>You both picked {moveRef.current}!</div>
                     <div>Your stake of {stake} ETH will be returned momentarily</div>
                 </div>

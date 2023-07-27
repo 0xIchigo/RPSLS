@@ -59,6 +59,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             if (receipt.status !== "success") throw Error(`Transaction failed: ${receipt}`);
 
             setResponseSent(true);
+            console.log(`Response sent: ${responseSent}`);
 
             let peerMessage: PeerMessage = {
                 _type: "Player2Responded"
@@ -295,7 +296,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             {typeof(props.peerId) === null && (
                <div className="flex flex-col items-center justify-center mt-4">Error! The peer ID is of type null: {props.peerId}</div>
             )}
-            {connected && p1Address !== "" && winner === "Null" && !youTimedOut && (
+            {connected && p1Address !== "" && winner === "Null" && (
                 <div className="flex flex-col items-center justify-center mt-4">
                     <div className="flex flex-col justify-center items-center mt-4">
                         <div className="">
@@ -305,7 +306,13 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                             Your opponent: <a target="_blank" href={`https://sepolia.etherscan.io/address/${p1Address}`}>{p1Address}</a>
                         </div>
 
-                        {contractAddress !== undefined && (
+                        {!contractAddress && props.playerAddress !== "" && (
+                            <div>
+                                Waiting on Player One to deploy the game...
+                            </div>
+                        )}
+
+                        {contractAddress !== undefined && !responseSent && (
                             <>
                                 <div className="flex flex-row mt-10">
                                     {IMAGES.map((image, index) => {
@@ -362,20 +369,20 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                 </>
             )}
             {winner === "Player2" ? (
-                <div className="flex flex-col items-center justify-center mt-8">
+                <div className="flex flex-col items-center justify-center mt-4">
                     <div>Congrats, you won!</div>
                     <div>You picked {Weapon[choice ?? 0]} while your opponnent picked {p1Choice as Weapon}</div>
                     <div>Your winnings of {Number(requiredStake) * 2} ETH will be sent over! Check your wallet momentarily</div>
                 </div>
             ) : winner === "Player1" ? (
-                <div className="flex flex-col items-center justify-center mt-8">
+                <div className="flex flex-col items-center justify-center mt-4">
                     <div>You lost!</div>
                     <div>You picked {Weapon[choice ?? 0]} while your opponnent picked {p1Choice as Weapon}</div>
-                    <div>Your wager of {requiredStake} ETH has been sent to {p1Address}</div>
+                    <div>Your wager of {requiredStake} ETH has been sent to <a target="_blank" href={`https://sepolia.etherscan.io/address/${p1Address}`}>{p1Address}</a></div>
                 </div>
             ) : winner === "Draw" ? (
-                <div className="flex flex-col items-center justify-center mt-8">
-                    <div>It is a draw!</div>
+                <div className="flex flex-col items-center justify-center mt-4">
+                    <div>It<span>&#39;</span>s a draw!</div>
                     <div>You both picked {Weapon[choice ?? 0]}!</div>
                     <div>Your stake of {requiredStake} ETH will be returned momentarily</div>
                 </div>

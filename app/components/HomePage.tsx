@@ -61,6 +61,9 @@ export default function HomePage() {
                     <div className="pl-2 mb-4">
                         If a party does not respond for more than 5 minutes then there is a timeout. If Player Two times out then Player One is able to retrieve their own stake. If, however, Player One times out, Player Two receives both of their stakes as Player One can only time out after a game has been created.
                     </div>
+                    <div className="pl-2 mb-4">
+                        If Player One does not enter an amount for the required stake and starts the game, there is a default stake of 0.0001 ETH.
+                    </div>
                 </div>
             </div>
         )
@@ -160,5 +163,3 @@ export default function HomePage() {
         </main>
     )
 }
-
-// Spock: <span className="font-Icons">v</span>
