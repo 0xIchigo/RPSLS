@@ -30,6 +30,7 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
 
     const [stake, setStake] = useState<string>(DEFAULT_STAKE);
     const [peerId, setPeerId] = useState<String>("");
+    const [youTimedOut, setYouTimedOut] = useState<Boolean>(false);
     const [connected, setConnected] = useState<DataConnection>();
     const [p2Address, setP2Address] = useState<string>("");
     const [p2Response, setP2Response] = useState<Number>(0);
@@ -215,9 +216,9 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     } else if (data._type === "Player2Responded") {
                         getBlockchainInfo();
                         forceUpdate();
-                    } else {
-                        return;
-                    }
+                    } else if (data._type === "YouTimedOut") {
+                        return setYouTimedOut(true);
+                    } else {}
                 });
             });
         };
@@ -366,6 +367,9 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         }
 
         if (timer.expired && winner === "Null") {
+            let peerMessage: PeerMessage = { _type: "YouTimedOut" };
+            connected?.send(peerMessage);
+            
             return (
                 <div>
                     <div>
@@ -482,7 +486,7 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             {connected && p2Address !== "" && winner === "Null" && (
                 <div>
                     <div className="flex flex-col justify-center items-center mt-4">
-                        <div className="">
+                        <div>
                             Connected with Player Two!
                         </div>
                         <div>
@@ -537,10 +541,10 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                                 </button>
                             </>
                         )}
-                        {contractAddress !== undefined && (
+                        {contractAddress !== undefined && winner === "Null" && !youTimedOut && (
                             <>
                                 <div className="flex flex-col items-center justify-center text-center mt-4">
-                                    {!timer.expired ?? timerComponent(timer, setTimer)}
+                                    {timerComponent(timer, setTimer)}
                                     {timerExpired(winner, timer, p2Timeout)}
                                 </div>
                                 <div className="mt-4">
@@ -573,6 +577,19 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                 </div>
             ) : (
                 <span></span>
+            )}
+            {youTimedOut && (
+                <>
+                    <div className="mt-4">
+                        You<span>&#39;</span>ve timed out! 
+                    </div>
+                    <div>
+                        Your stake is being sent to Player One...
+                    </div>
+                    <div>Better luck next time!</div>
+                    <div className="mt-8">Live long and prosper</div>
+                    <span className="font-Icons text-4xl">v</span>
+                </>
             )}
         </div>
     )

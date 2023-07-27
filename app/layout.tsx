@@ -1,5 +1,6 @@
-import './globals.css'
-import type { Metadata } from 'next'
+import './globals.css';
+import type { Metadata } from 'next';
+import Footer from "./components/Footer";
 
 export const metadata: Metadata = {
   title: 'RPSLS',
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="h-full w-full bg-black text-white">
         {children}
+        <Footer />
       </body>
     </html>
   )

@@ -22,6 +22,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
     const [requiredStake, setRequiredStake] = useState<string>(DEFAULT_STAKE);
     const [contractAddress, setContractAddress] = useState<Address>();
     const [connected, setConnected] = useState<DataConnection>();
+    const [youTimedOut, setYouTimedOut] = useState<Boolean>(false);
     const [winner, setWinner] = useState<Winner>("Null");
     const [p1Address, setP1Address] = useState<string>("");
     const [p1Choice, setP1Choice] = useState<Number>();
@@ -212,6 +213,9 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         }
 
         if (timer.expired && winner === "Null") {
+            let peerMessage: PeerMessage = { _type: "YouTimedOut" };
+            connected?.send(peerMessage);
+
             return (
                 <div>
                     <div>
@@ -274,6 +278,8 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         console.log(`amountStaked: ${data.amountStaked}`);
                         console.log(`Type: ${typeof(data.amountStaked)}`);
                         return setRequiredStake(data.amountStaked);
+                    } else if (data._type === "YouTimedOut") {
+                        return setYouTimedOut(true);
                     } else {
                         return;
                     }
@@ -289,7 +295,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
             {typeof(props.peerId) === null && (
                <div className="flex flex-col items-center justify-center mt-4">Error! The peer ID is of type null: {props.peerId}</div>
             )}
-            {connected && p1Address !== "" && winner === "Null" && (
+            {connected && p1Address !== "" && winner === "Null" && !youTimedOut && (
                 <div className="flex flex-col items-center justify-center mt-4">
                     <div className="flex flex-col justify-center items-center mt-4">
                         <div className="">
@@ -342,10 +348,10 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                     </div>
                 </div>
             )}
-            {contractAddress !== undefined && responseSent && winner === "Null" && (
+            {contractAddress !== undefined && responseSent && winner === "Null" && !youTimedOut && (
                 <>
                     <div className="flex flex-col items-center justify-center text-center mt-4">
-                        {!timer.expired ?? timerComponent(timer, setTimer)}
+                        {timerComponent(timer, setTimer)}
                         {timerExpired(winner, timer, p1Timeout)}
                     </div>
                     <div className="mt-4">
@@ -375,6 +381,19 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                 </div>
             ) : (
                 <span></span>
+            )}
+            {youTimedOut && (
+                <>
+                    <div className="mt-4">
+                        You<span>&#39;</span>ve timed out! 
+                    </div>
+                    <div>
+                        Your stake is being sent to Player One...
+                    </div>
+                    <div>Better luck next time!</div>
+                    <div className="mt-8">Live long and prosper</div>
+                    <span className="font-Icons text-4xl">v</span>
+                </>
             )}
         </>
     )
