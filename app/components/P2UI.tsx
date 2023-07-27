@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import Image from "next/Image";
+import Image from "next/image";
 import { 
     Address, 
     parseEther 

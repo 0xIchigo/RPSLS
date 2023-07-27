@@ -3,7 +3,7 @@ import { useState,
     useRef,
     ChangeEvent 
 } from "react";
-import Image from "next/Image";
+import Image from "next/image";
 import { useInterval } from "usehooks-ts";
 import { DataConnection } from "peerjs";
 import { nanoid } from "nanoid";
