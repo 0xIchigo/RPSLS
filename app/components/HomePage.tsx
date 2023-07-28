@@ -64,6 +64,9 @@ export default function HomePage() {
                     <div className="pl-2 mb-4">
                         If Player One does not enter an amount for the required stake and starts the game, there is a default stake of 0.0001 ETH.
                     </div>
+                    <div className="pl-2 mb-4">
+                        Player One will be prompted to confirm a transaction that calls the solve function, which determines the winner, when Player Two sends their response.
+                    </div>
                 </div>
             </div>
         )

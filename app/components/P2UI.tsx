@@ -108,7 +108,6 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         p1Moved: true,
                         stake: stake,
                     });
-                    //setRequiredStake(stake as unknown as string);
                 }
 
                 if (p2Move) {
@@ -276,8 +275,6 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         setTimer({ ...timer, status: "Null", reset: true });
                         return setWinner(data.player)
                     } else if (data._type === "requiredStake") {
-                        console.log(`amountStaked: ${data.amountStaked}`);
-                        console.log(`Type: ${typeof(data.amountStaked)}`);
                         return setRequiredStake(data.amountStaked);
                     } else if (data._type === "YouTimedOut") {
                         return setYouTimedOut(true);
@@ -362,9 +359,7 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         {timerExpired(winner, timer, p1Timeout)}
                     </div>
                     <div className="mt-4">
-                        <a href={`https://sepolia.etherscan.io/address/${contractAddress}`}>
-                            Match: {contractAddress}
-                        </a>
+                        Match: <a href={`https://sepolia.etherscan.io/address/${contractAddress}`}>{contractAddress}</a>
                     </div>
                 </>
             )}

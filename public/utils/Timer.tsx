@@ -46,7 +46,7 @@ const Timer = ({
 
     return (
         <div className="mt-4">
-            Time until your opponent times out: <span>{minutes}</span>:<span>{seconds}</span>
+            Time until your opponent times out: <span>{minutes}</span>:<span>{String(seconds).padStart(2, "0")}</span>
         </div>
     );
 };

@@ -78,7 +78,6 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         */
         saltRef.current = getRandomVal() as unknown as bigint;
         forceUpdate();
-        console.log(p2Address);
 
         const p1Hash = keccak256(encodePacked(["uint8", "uint256"], [choice, saltRef.current])) as Hex;
 
@@ -155,8 +154,6 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
 
                 connected?.send(peerMessage);
 
-                console.log("Sending requiredStake");
-
                 peerMessage = {
                     _type: "requiredStake",
                     amountStaked: stake
@@ -229,8 +226,6 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
 
     const getBlockchainInfo = async () => {
         if (contractAddress) {
-            console.log("In getBlockchainInfo");
-
             try {
                 // We set the p1Moved to true in the createRPSLSGame function and therefore do not have to check again -
                 // the contract will not deploy without the hash
@@ -241,7 +236,6 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         functionName: "c2"
                     })
                 ]);
-                console.log(`Read p2Move: ${p2Move}`);
     
                 if (p2Move !== 0) {
                     setMoveInfo({
@@ -249,8 +243,6 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                         p2Moved: true,
                         p2Choice: p2Move,
                     });
-
-                    console.log("Set moveInfo");
                 }
             } catch (err) {
                 console.log(`Error retrieving game info from Sepolia: ${err}`);
@@ -267,13 +259,11 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
     }, [moveInfo, timer.expired]);
 
     useEffect(() => {
-        console.log("Checking winner...");
         if (!timer.expired && winner === "Null") {
             (async () => {
                 await checkWinner();
             })();
         }
-        console.log("Winner has been decided!");
         // eslint-disable-next-line
     }, [p2Response, timer.expired, winner]);
 
@@ -387,25 +377,24 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
         )
     };
 
-    const win = (_c1: Weapon, _c2: Weapon) => {
+    const win = (_c1: number, _c2: number) => {
         if (_c1 === _c2) {
             return "Draw";
         } else if (_c1 % 2 == _c2 % 2) {
-            return _c1 > _c2;
-        } else {
             return _c1 < _c2;
+        } else {
+            return _c1 > _c2;
         }
     }
-
 
     const decideWinner = (): Winner => {
         if (!moveRef.current || !p2Response) return "Null";
 
-        let p2ResponseAsWeapon: Weapon = Weapon[p2Response as number] as unknown as Weapon;
+        let moveRefAsWeapon: number = Weapon[moveRef.current as unknown as keyof typeof Weapon];
 
-        if (win(moveRef.current, p2ResponseAsWeapon) === "Draw") {
+        if (win(moveRefAsWeapon, p2Response as number) === "Draw") {
             return "Draw";
-        } else if (win(moveRef.current, p2ResponseAsWeapon)) {
+        } else if (win(moveRefAsWeapon, p2Response as number)) {
             return "Player1";
         } else {
             return "Player2";
@@ -430,13 +419,10 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
 
             const hash = await props.walletClient.writeContract(request);
             const receiptWinnerTxt = await props.publicClient.waitForTransactionReceipt({ hash });
-            console.log(`receiptWinnerTxt processed: ${receiptWinnerTxt}`);
 
             if (receiptWinnerTxt.status !== "success") throw Error(`Transaction failed: ${receiptWinnerTxt}`);
-            console.log(`Transaction was a success: ${receiptWinnerTxt.status}`);
 
             const winningPlayer = decideWinner();
-            console.log(`Decided winner: ${winningPlayer}`)
             setWinner(winningPlayer);
             console.log(`Winner set: ${winner}`)
 
@@ -447,7 +433,6 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                 peerMessage = { _type: "Player1Choice", choice: moveRef.current as Weapon };
                 connected?.send(peerMessage);
             }
-            console.log("Sent peer messages!");
         } catch (err) {
             console.log(`Error checking the winner: ${err}`);
         }
@@ -549,9 +534,7 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                                     {timerExpired(winner, timer, p2Timeout)}
                                 </div>
                                 <div className="mt-4">
-                                    <a href={`https://sepolia.etherscan.io/address/${contractAddress}`}>
-                                        Match: {contractAddress}
-                                    </a>
+                                    Match: <a href={`https://sepolia.etherscan.io/address/${contractAddress}`}>{contractAddress}</a>
                                 </div>
                             </>
                         )}
