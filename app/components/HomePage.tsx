@@ -32,7 +32,7 @@ export default function HomePage() {
         const handleClose = () => setToggleRulesPopup(false);
 
         return (
-            <div className="fixed top-0 left-0 z-999 w-screen h-screen bg-black bg-opacity-75 flex items-center justify-content">
+            <div className="fixed top-0 left-0 z-999 w-screen h-screen bg-black bg-opacity-75 flex items-center justify-content" onClick={handleClose}>
                 <div className=" max-h-1/2-screen w-120 rounded bg-black px-4 py-2 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 overflow-y-scroll border-white border-2"> 
                     <div className="flex flex-row-reverse text-center mt-1 mb-2 cursor-pointer hover:text-green" onClick={handleClose}>
                         <AiOutlineClose />
