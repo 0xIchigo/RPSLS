@@ -41,6 +41,9 @@ export default function HomePage() {
                         Rules
                     </div>
                     <div className="pl-2 mb-4">
+                        Rock, Paper, Scissors, Lizard, Spock (RPSLS) is an expanded version of the classic game of Rock, Paper, Scissors created by Sam Kass and Karen Bryla. The game was popularized on the show The Big Bang Theory as it was used to settle a dispute about what to watch on TV between the characters Sheldon and Raj in the episode titled The Lizard-Spock Expansion. 
+                    </div>
+                    <div className="pl-2 mb-4">
                         To play RPSLS each player must pick either Rock, Paper, Scissors, Lizard, or Spock and reveal it at the same time as the other player. A winning hand is determined as follows:
                     </div>
                     <ul className="pl-8 list-disc list-inside mb-4">

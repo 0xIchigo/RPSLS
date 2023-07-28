@@ -342,10 +342,10 @@ const P2UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                                     </div>
                                 )}
                                 <button
-                                    className="mt-4"
+                                    className="mt-4 hover:text-green"
                                     onClick={() => sendP2Choice()}
                                 >
-                                    Send Response
+                                    Click to Send Response
                                 </button>
                             </>
                         )}

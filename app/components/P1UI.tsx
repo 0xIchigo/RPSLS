@@ -520,10 +520,10 @@ const P1UI = (props: { playerAddress: string, publicClient: any, walletClient: a
                                     You have selected: {moveRef.current}
                                 </div>
                                 <button
-                                    className="mt-4"
+                                    className="mt-4 hover:text-green"
                                     onClick={() => createRPSLSGame()}
                                 >
-                                    Create Match
+                                    Click to Create Match
                                 </button>
                             </>
                         )}
